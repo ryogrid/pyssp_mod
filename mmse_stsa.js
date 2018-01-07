@@ -119,9 +119,9 @@ function compute_by_noise_pow(signal, n_pow){
     _G[idx] = xi[idx] / (xi[idx] + 1.0)
     idx = np.isnan(_G) + np.isinf(_G)
     _G[idx] = _constant
-    _G = np.maximum(_G, 0.0)
+    _G = np.max(_G, 0.0)
     var amp = _G.multiply(s_amp)
-    amp = np.maximum(amp, 0.0)
+    amp = np.max(amp, 0.0)
     var amp2 = amp.multiply(_ratio).add(s_amp.multiply(1.0 - _ratio))
     _prevAmp = amp
     var spec = amp2.multiply(exp_nparray(s_phase,0,1))
@@ -151,7 +151,7 @@ function _calc_apriori_snr(gamma){
     // return _alpha * _G ** 2.0 * _prevGamma +\
     //     (1.0 - _alpha) * np.maximum(gamma - 1.0, 0.0)  # a priori s/n ratio
     return _G.multiply(_G).multiply(_prevGamma).multiply(_alpha).add(
-        np.maximum(gamma - 1.0, 0.0).add(1.0 - _alpha))  // a priori s/n ratio
+        np.max(gamma.add(-1.0), 0.0).add(1.0 - _alpha))  // a priori s/n ratio
 }
 
 // function _calc_apriori_snr2(gamma, n_pow){
