@@ -1,7 +1,6 @@
 // -*- coding: utf-8 -*-
 var np = require("numjs")
 var fs = require("fs")
-var windowing = require("fft-windowing")
 var math = require("mathjs")
 //import scipy as sp
 //import sys
@@ -14,6 +13,7 @@ var frame_num = 2646000;
 var bufferSize = frame_num * 4;
 var all_buffersize = bufferSize + 44;
 
+var _winsize = 512
 var _window = null
 var _G = null
 var _prevGamma = null
@@ -26,16 +26,16 @@ var _gamma15 = null
 // result doesn't contain index *end*
 function slice_nparray(arr,begin,end){
   var ret_len = end - begin
-  var ret_arr = np.zeros(ret_len)
+  var ret_arr = np.array(new Array(ret_len))
   for(var i=begin;i<end;i++){
-    ret_arr[i-begin] = arr[i]
+    ret_arr.set(i-begin,arr.get(i))
   }
   return ret_arr
 }
 
 function exp_nparray(arr,real,imaginary){
   var arr_len = arr.size
-  var ret = np.zeros(arr_len)
+  var ret = np.array(new Array(arr_len))
   var x = math.complex(real, imaginary)
   for(var i=0;i<arr_len;i++){
     ret[i] = math.exp(math.multiply(arr[i],x))
@@ -44,8 +44,8 @@ function exp_nparray(arr,real,imaginary){
 }
 
 function noise_reduction(signal,params,winsize,window,ss,ntime){
-    var out=np.zeros(frame_num)
-    var n_pow = compute_avgpowerspectrum(slice_nparray(signal,0,winsize*params[2] /winsize/(1000.0/ntime)),winsize,window) //maybe 300ms
+    var out=np.array(new Array(frame_num))
+    var n_pow = compute_avgpowerspectrum(slice_nparray(signal,0,Math.round(params[2]/(1000/ntime))),winsize,window) //maybe 300ms
     var nf = frame_num/(winsize/2) - 1
     var end = Math.round(frame_num/(winsize/2) - 1)
     //for no in xrange(nf):
@@ -84,10 +84,10 @@ function noise_reduction(signal,params,winsize,window,ss,ntime){
 
 function __init__(winsize, window, constant, ratio, alpha){
     _window = window
-    _G = np.zeros(winsize)
-    _prevGamma = np.zeros(winsize)
+    _G = np.array(new Array(winsize))
+    _prevGamma = np.array(new Array(winsize))
     _alpha = alpha
-    _prevAmp = np.zeros(winsize)
+    _prevAmp = np.array(new Array(winsize))
     _ratio = ratio
     _constant = constant
     _gamma15 = math.gamma(1.5)
@@ -95,7 +95,7 @@ function __init__(winsize, window, constant, ratio, alpha){
 
 function compute_by_noise_pow(signal, n_pow){
 //    s_spec = np.fft.fftpack.fft(signal * _window)
-    var s_spec = np.fft(signal.multiply(_window))
+    var s_spec = my_fft(signal.multiply(_window),_winsize)
     var s_amp = np.abs(s_spec)
     var s_phase = np.angle(s_spec)
     var gamma = _calc_aposteriori_snr(s_amp, n_pow)
@@ -127,7 +127,7 @@ function compute_by_noise_pow(signal, n_pow){
 
 function compute(signal, noise){
 //    n_spec = np.fft.fftpack.fft(noise * _window)
-    var n_spec = np.fft(noise.multiply(_window))
+    var n_spec = my_fft(noise.multiply(_window),_winsize)
 //    n_pow = np.abs(n_spec) ** 2.0
     var n_pow = np.abs(n_spec).multiply(np.abs(n_spec))
     return compute_by_noise_pow(signal, n_pow)
@@ -199,18 +199,29 @@ function get_window(winsize, no){
 
 function compute_avgamplitude(signal, winsize, window){
     var windownum = Math.round(frame_num / (winsize / 2)) - 1
-    var avgamp = np.zeros(winsize)
+    var avgamp = np.array(new Array(winsize))
     for(var l=0;l<windownum;l++){
-        avgamp.add(np.abs(sp.fft(get_frame(signal, winsize, l).multiply(window))))
+        avgamp.add(np.abs(my_fft(get_frame(signal, winsize, l).multiply(window)),winsize))
     }
     return avgamp.divide(windownum * 1.0)
 }
 
+function my_fft(ndarr,input_len){
+  var fft_arr = []
+  for(var i=0;i<input_len;i++){
+    fft_arr.push([ndarr.get(i),0])
+  }
+  var tmp = np.fft(np.array(fft_arr))
+  return tmp.slice(0,1).flatten()
+}
+
 function compute_avgpowerspectrum(signal, winsize, window){
     var windownum = Math.round(frame_num / (winsize / 2)) - 1
-    var avgpow = np.zeros(winsize)
+    var avgpow = np.array(new Array(winsize))
     for(var l=1;l<windownum;l++){
-        var tmp = np.abs(sp.fft(get_frame(signal, winsize, l).multiply(window)))
+//        var tmp = np.abs(np.fft(get_frame(signal, winsize, l).multiply(window)))
+        var real_arr = get_frame(signal, winsize, l).multiply(window)
+        var tmp = np.abs(my_fft(real_arr,winsize))
         avgpow.add(tmp.multiply(tmp))
     }
     return avgpow.divide(windownum * 1.0)
@@ -231,20 +242,25 @@ function compute_avgpowerspectrum(signal, winsize, window){
 // }
 
 function generate_hann_arr(M){
-  var step_arr = new Array(M)
-  for(i=0;i++;i<M){
-    step_arr[i] = i
+  var ret_arr = new Array(M)
+  for(i=0;i<M;i++){
+    ret_arr[i] = 0.5 - 0.5*Math.cos(2*Math.PI*i/(M-1))
   }
-  return windowing.hann(step_arr)
+
+  return np.array(ret_arr)
 }
 
-var signal = np.zeros(frame_num);
-
-var sample_str = fs.readFileSync('./sample60.txt',"ascii");
-var splited = sample_str.split(",");
+var base_arr = new Array(frame_num)
+var signal = np.array(base_arr)
 for(var i=0;i<frame_num;i++){
-  signal[i] = parseFloat(splited[i]);
+  signal.set(i,0)
 }
+
+// var sample_str = fs.readFileSync('./sample60.txt',"ascii");
+// var splited = sample_str.split(",");
+// for(var i=0;i<frame_num;i++){
+//   signal[i] = Number(splited[i]);
+// }
 
     //signal, params = read("./tools/asakai60.wav", 512)
     //     params = ((wf.getnchannels(), wf.getsampwidth(),
@@ -253,11 +269,11 @@ for(var i=0;i<frame_num;i++){
 var params = [2,-1,44100]
 
 //    var window = sp.hanning(512)
-var window = generate_hann_arr(512)
+var window = generate_hann_arr(_winsize)
 
-__init__(512,window,1.0,0.001,0.99)
+__init__(_winsize,window,1.0,0.001,0.99)
 
-var output = noise_reduction(signal,512,window,null,300)
+var output = noise_reduction(signal,params,_winsize,window,null,300)
 
 //    if False:
 //        write(params, noise_reduction(signal,512,window,null,300))
