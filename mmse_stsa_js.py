@@ -62,14 +62,14 @@ def __init__(winsize, window, constant=0.001, ratio=1.0, alpha=0.99):
     global _ratio
     global _constant
     global _gamma15
-    
+
     _window = window
     _G = np.zeros(winsize, np.float64)
     _prevGamma = np.zeros(winsize, np.float64)
     _alpha = alpha
     _prevAmp = np.zeros(winsize, np.float64)
     _ratio = ratio
-    _constant = constant    
+    _constant = constant
     _gamma15 = spc.gamma(1.5)
 
 def compute_by_noise_pow(signal, n_pow):
@@ -81,12 +81,13 @@ def compute_by_noise_pow(signal, n_pow):
     global _ratio
     global _constant
     global _gamma15
-    
+
     s_spec = np.fft.fftpack.fft(signal * _window)
     s_amp = np.absolute(s_spec)
     s_phase = np.angle(s_spec)
     gamma = _calc_aposteriori_snr(s_amp, n_pow)
     xi = _calc_apriori_snr(gamma)
+    print("xi:" + str(type(xi)))
     _prevGamma = gamma
     nu = gamma * xi / (1.0 + xi)
     _G = (_gamma15 * np.sqrt(nu) / gamma) * np.exp(-nu / 2.0) *\
@@ -209,11 +210,11 @@ def calc_kurtosis(samples):
 
 
 if __name__ == '__main__':
-    signal, params = read("./tools/asakai60.wav", 512)
-    
+    signal, params = read("./asakai60.wav", 512)
+
     window = sp.hanning(512)
     import os.path
-    
+
     __init__(512,window,ratio=1.0,constant=0.001,alpha=0.99)
 
     if False:
