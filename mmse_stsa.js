@@ -93,11 +93,20 @@ function __init__(winsize, window, constant, ratio, alpha){
     _gamma15 = math.gamma(1.5)
 }
 
+function my_angle(ndarr){
+  var arr_len = ndarr.size
+  var ret_arr = np.array(new Array(arr_len))
+  for(var i=0;i<arr_len;i++){
+    ret_arr.set(i, Math.atan(ndarr.get(i))*2)
+  }
+  return ret_arr
+}
+
 function compute_by_noise_pow(signal, n_pow){
 //    s_spec = np.fft.fftpack.fft(signal * _window)
     var s_spec = my_fft(signal.multiply(_window),_winsize)
     var s_amp = np.abs(s_spec)
-    var s_phase = np.angle(s_spec)
+    var s_phase = my_angle(s_spec)
     var gamma = _calc_aposteriori_snr(s_amp, n_pow)
     var xi = _calc_apriori_snr(gamma)
     _prevGamma = gamma
