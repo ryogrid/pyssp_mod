@@ -385,15 +385,15 @@ function generate_hann_arr(M){
 
 var base_arr = new Array(frame_num)
 var signal = np.array(base_arr)
-for(var i=0;i<frame_num;i++){
-  signal.set(i,0)
-}
-
-// var sample_str = fs.readFileSync('./sample60.txt',"ascii");
-// var splited = sample_str.split(",");
 // for(var i=0;i<frame_num;i++){
-//   signal[i] = Number(splited[i]);
+//   signal.set(i,0)
 // }
+
+var sample_str = fs.readFileSync('./sample60.txt',"ascii");
+var splited = sample_str.split(",");
+for(var i=0;i<frame_num;i++){
+  signal[i] = Number(splited[i]);
+}
 
     //signal, params = read("./tools/asakai60.wav", 512)
     //     params = ((wf.getnchannels(), wf.getsampwidth(),
@@ -423,7 +423,7 @@ for(var i=0;i<output.size;i++){
   }
 }
 
-var wstream = fs.createWriteStream('./samples60_denoised.txt');
+var wstream = fs.createWriteStream('./samples60_pyssp_mmsestsa.txt');
 wstream.write(result_str, (err) => {
   if (err) throw err;
     console.log('The file has been saved!');
