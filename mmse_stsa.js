@@ -151,10 +151,12 @@ function isinf_nparray(arr){
 
 function noise_reduction(signal,params,winsize,window,ss,ntime){
     var out=np.array(new Array(frame_num))
+    for(var i=0;i<frame_num;i++){
+      out.set(i,0.0)
+    }
     // console.log(signal.size) // signal.size is ok
     var n_pow = compute_avgpowerspectrum(slice_nparray(signal,0,winsize*Math.round(params[2]/winsize/(1000.0/ntime))),winsize,window) //maybe 300ms
-    //console.log(n_pow)
-    //console.log(signal.size) // signal.size is ok
+    //console.log(n_pow) // bad values array
     var nf = frame_num/(winsize/2) - 1
     var end = Math.round(frame_num/(winsize/2) - 1)
     //for no in xrange(nf):
@@ -355,7 +357,7 @@ function my_fft(ndarr,input_len){
     fft_arr.push([ndarr.get(i),0])
   }
   var tmp = np.fft(np.array(fft_arr))
-  return tmp.slice(0,1).flatten()
+  return tmp.slice(null,[0,1]).flatten()
 }
 
 function my_ifft(ndarr,input_len){
