@@ -87,7 +87,6 @@ def compute_by_noise_pow(signal, n_pow):
     s_phase = np.angle(s_spec)
     gamma = _calc_aposteriori_snr(s_amp, n_pow)
     xi = _calc_apriori_snr(gamma)
-    print("xi:" + str(type(xi)))
     _prevGamma = gamma
     nu = gamma * xi / (1.0 + xi)
     _G = (_gamma15 * np.sqrt(nu) / gamma) * np.exp(-nu / 2.0) *\

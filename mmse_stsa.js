@@ -2,6 +2,7 @@
 var np = require("numjs")
 var fs = require("fs")
 var math = require("mathjs")
+var BESSEL = require('bessel')
 //import scipy as sp
 //import sys
 //import wave
@@ -33,12 +34,111 @@ function slice_nparray(arr,begin,end){
   return ret_arr
 }
 
-function exp_nparray(arr,real,imaginary){
+function mul_exp_nparray(arr,real,imaginary){
   var arr_len = arr.size
   var ret = np.array(new Array(arr_len))
   var x = math.complex(real, imaginary)
   for(var i=0;i<arr_len;i++){
-    ret[i] = math.exp(math.multiply(arr[i],x))
+    ret.set(i,math.exp(math.multiply(arr.get(i),x)))
+  }
+  return ret
+}
+
+function maximum_nparray(arr,val){
+  var arr_len = arr.size
+  var ret = np.array(new Array(arr_len))
+  for(var i=0;i<arr_len;i++){
+    ret.set(i,Math.max(arr.get(i),val))
+  }
+  return ret
+}
+
+function i0_nparray(arr,val){
+  var arr_len = arr.size
+  var ret = np.array(new Array(arr_len))
+  for(var i=0;i<arr_len;i++){
+    ret.set(BESSEL.besseli(arr.get(i),0))
+  }
+  return ret
+}
+
+function i1_nparray(arr,val){
+  var arr_len = arr.size
+  var ret = np.array(new Array(arr_len))
+  for(var i=0;i<arr_len;i++){
+    ret.set(BESSEL.besseli(arr.get(i),1))
+  }
+  return ret
+}
+
+function less_nparray(arr1,arr2){
+  var arr_len = arr1.size
+  var ret_arr = np.array(new Arra(arr_len))
+
+  for(var i=0;i<arr_len;i++){
+    if(arr1.get(i) < arr2.get(i)){
+      ret_arr.set(i,true)
+    }else {
+      ret_arr.set(i,false)
+    }
+  }
+
+  return ret_arr
+}
+
+function set_with_bool_nparray(arr,bool_arr,val){
+  var arr_len = arr.size
+  var tmp_arr = []
+
+  for(var i=0;i<arr_len;i++){
+    if(bool_arr.get(i)){
+      arr.set(i,val)
+    }
+  }
+}
+
+function copy_with_bool_nparray(arr1,arr2,bool_arr){
+  var arr_len = arr1.size
+  var tmp_arr = []
+
+  for(var i=0;i<arr_len;i++){
+    if(bool_arr.get(i)){
+      arr1.set(i,arr2.get(i))
+    }
+  }
+}
+
+function fill_nparray(arr,val){
+  var arr_len = arr.size
+  var ret = np.array(new Array(arr_len))
+  for(var i=0;i<arr_len;i++){
+    ret.set(i,val)
+  }
+  return ret
+}
+
+function isnan_nparray(arr){
+  var arr_len = arr.size
+  var ret = np.array(new Array(arr_len))
+  for(var i=0;i<arr_len;i++){
+    if(Number.isNaN(arr.get(i))){
+      ret.set(i,true)
+    }else{
+      ret.set(i,false)
+    }
+  }
+  return ret
+}
+
+function isinf_nparray(arr){
+  var arr_len = arr.size
+  var ret = np.array(new Array(arr_len))
+  for(var i=0;i<arr_len;i++){
+    if(arr.get(i) ==== Infinity){
+      ret.set(i,true)
+    }else{
+      ret.set(i,false)
+    }
   }
   return ret
 }
@@ -111,20 +211,34 @@ function compute_by_noise_pow(signal, n_pow){
     var xi = _calc_apriori_snr(gamma)
     _prevGamma = gamma
     var nu = gamma.multiply(xi).divide((xi.add(1.0)))
-    _G = (_gamma15.multiply(np.sqrt(nu)).divide(gamma)).multiply(np.exp(nu.multiply(-1.0).divide(2.0)))
-          .multiply((nu.add(1.0).multiply(spc.i0(nu.divide(2.0)))).add(nu.multiply(spc.i1(nu.divide(2.0)))))
-    var idx = np.less(s_amp.multiply(s_amp), n_pow)
-    _G[idx] = _constant
-    idx = np.isnan(_G) + np.isinf(_G)
-    _G[idx] = xi[idx] / (xi[idx] + 1.0)
-    idx = np.isnan(_G) + np.isinf(_G)
-    _G[idx] = _constant
-    _G = np.max(_G, 0.0)
+    _G = (np.sqrt(nu).multiply(_gamma15).divide(gamma)).multiply(np.exp(nu.multiply(-1.0).divide(2.0)))
+          .multiply((nu.add(1.0).multiply(i0_nparray(nu.divide(2.0)))).add(nu.multiply(i1_nparray(nu.divide(2.0)))))
+    var idx = less_nparray(s_amp.multiply(s_amp), n_pow)
+
+    // _G[idx] = _constant
+    // idx = np.isnan(_G) + np.isinf(_G)
+    // _G[idx] = xi[idx] / (xi[idx] + 1.0)
+    // idx = np.isnan(_G) + np.isinf(_G)
+    // _G[idx] = _constant
+
+    set_with_bool_nparray(_G,idx,_constant)
+    idx = isnan_nparray(_G).add(isinf_nparray(_G))
+    var xi_len = xi.size
+    for(var i=0;i<xi_len;i++){
+      if(idx.get(i)){
+          xi.set(i,xi.get(i)/(xi.get(i)+1.0))
+      }
+    }
+    copy_with_bool_nparray(_G,xi,idx)
+    idx = isnan_nparray(_G).add(isinf_nparray(_G))
+    set_with_bool_nparray(_G,idx,_constant)
+
+    _G = maximum_nparray(_G, 0.0)
     var amp = _G.multiply(s_amp)
-    amp = np.max(amp, 0.0)
+    amp = maximum_nparray(amp, 0.0)
     var amp2 = amp.multiply(_ratio).add(s_amp.multiply(1.0 - _ratio))
     _prevAmp = amp
-    var spec = amp2.multiply(exp_nparray(s_phase,0,1))
+    var spec = amp2.multiply(mul_exp_nparray(s_phase,0,1))
 //    return np.real(np.fft.fftpack.ifft(spec))
     return np.real(np.ifft(spec))
 }
@@ -151,7 +265,7 @@ function _calc_apriori_snr(gamma){
     // return _alpha * _G ** 2.0 * _prevGamma +\
     //     (1.0 - _alpha) * np.maximum(gamma - 1.0, 0.0)  # a priori s/n ratio
     return _G.multiply(_G).multiply(_prevGamma).multiply(_alpha).add(
-        np.max(gamma.add(-1.0), 0.0).add(1.0 - _alpha))  // a priori s/n ratio
+        maximum_nparray(gamma.add(-1.0), 0.0).add(1.0 - _alpha))  // a priori s/n ratio
 }
 
 // function _calc_apriori_snr2(gamma, n_pow){
@@ -291,11 +405,11 @@ var output = noise_reduction(signal,params,_winsize,window,null,300)
 //        write(params, uniting_channles(noise_reduction(l,params,512,window,null,300),noise_reduction(r,params,512,window,null,300)))
 
 var result_str = "";
-for(var i=0;i<output.length;i++){
+for(var i=0;i<output.size;i++){
   if(i==0){
-    result_str = String(output[i]) + "," + String(output[i]);
+    result_str = String(output.get(i)) + "," + String(output.get(i));
   }else{
-    result_str = result_str + "," + String(output[i]) + "," + String(output[i]);
+    result_str = result_str + "," + String(output.get(i)) + "," + String(output.get(i));
   }
 }
 
