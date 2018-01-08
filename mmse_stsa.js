@@ -73,7 +73,7 @@ function i1_nparray(arr,val){
 
 function less_nparray(arr1,arr2){
   var arr_len = arr1.size
-  var ret_arr = np.array(new Arra(arr_len))
+  var ret_arr = np.array(new Array(arr_len))
 
   for(var i=0;i<arr_len;i++){
     if(arr1.get(i) < arr2.get(i)){
@@ -134,7 +134,7 @@ function isinf_nparray(arr){
   var arr_len = arr.size
   var ret = np.array(new Array(arr_len))
   for(var i=0;i<arr_len;i++){
-    if(arr.get(i) ==== Infinity){
+    if(arr.get(i) == Infinity){
       ret.set(i,true)
     }else{
       ret.set(i,false)
@@ -240,7 +240,8 @@ function compute_by_noise_pow(signal, n_pow){
     _prevAmp = amp
     var spec = amp2.multiply(mul_exp_nparray(s_phase,0,1))
 //    return np.real(np.fft.fftpack.ifft(spec))
-    return np.real(np.ifft(spec))
+//    return np.real(spec_ifft)
+    return my_ifft(spec, spec.size)
 }
 
 // function _sigmoid(gain){
@@ -335,6 +336,15 @@ function my_fft(ndarr,input_len){
     fft_arr.push([ndarr.get(i),0])
   }
   var tmp = np.fft(np.array(fft_arr))
+  return tmp.slice(0,1).flatten()
+}
+
+function my_ifft(ndarr,input_len){
+  var ifft_arr = []
+  for(var i=0;i<input_len;i++){
+    ifft_arr.push([ndarr.get(i),0])
+  }
+  var tmp = np.ifft(np.array(ifft_arr))
   return tmp.slice(0,1).flatten()
 }
 
