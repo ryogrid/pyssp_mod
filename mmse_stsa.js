@@ -45,7 +45,8 @@ function mul_exp_nparray(arr,real,imaginary){
   var ret = np.array(new Array(arr_len))
   var x = math.complex(real, imaginary)
   for(var i=0;i<arr_len;i++){
-    ret.set(i,math.exp(math.multiply(arr.get(i),x)))
+    ret.set(i,math.exp(math.multiply(arr.get(i),x)).re)
+    //console.log(math.exp(math.multiply(arr.get(i),x)))
   }
   return ret
 }
@@ -59,21 +60,23 @@ function maximum_nparray(arr,val){
   return ret
 }
 
-function i0_nparray(arr,val){
+function i0_nparray(arr){
   var arr_len = _winsize
   var ret = np.array(new Array(arr_len))
   for(var i=0;i<arr_len;i++){
-    ret.set(BESSEL.besseli(arr.get(i),0))
+    ret.set(i,BESSEL.besseli(arr.get(i),0))
   }
+  //console.log(ret)
   return ret
 }
 
-function i1_nparray(arr,val){
+function i1_nparray(arr){
   var arr_len = _winsize
   var ret = np.array(new Array(arr_len))
   for(var i=0;i<arr_len;i++){
-    ret.set(BESSEL.besseli(arr.get(i),1))
+    ret.set(i,BESSEL.besseli(arr.get(i),1))
   }
+  //console.log(ret)
   return ret
 }
 
@@ -221,10 +224,14 @@ function compute_by_noise_pow(signal, n_pow){
     var s_phase = my_angle(s_spec)
     var gamma = _calc_aposteriori_snr(s_amp, n_pow)
     var xi = _calc_apriori_snr(gamma)
+    //console.log(s_amp)
+    //console.log(xi)
     _prevGamma = gamma
     var nu = gamma.multiply(xi).divide((xi.add(1.0)))
+    //console.log(nu)
     _G = (np.sqrt(nu).multiply(_gamma15).divide(gamma)).multiply(np.exp(nu.multiply(-1.0).divide(2.0)))
           .multiply((nu.add(1.0).multiply(i0_nparray(nu.divide(2.0)))).add(nu.multiply(i1_nparray(nu.divide(2.0)))))
+    //console.log(_G)
     var idx = less_nparray(s_amp.multiply(s_amp), n_pow)
 
     // _G[idx] = _constant
@@ -247,14 +254,20 @@ function compute_by_noise_pow(signal, n_pow){
     set_with_bool_nparray(_G,idx,_constant)
 
     _G = maximum_nparray(_G, 0.0)
+    //console.log(_G)
     var amp = _G.multiply(s_amp)
     amp = maximum_nparray(amp, 0.0)
     var amp2 = amp.multiply(_ratio).add(s_amp.multiply(1.0 - _ratio))
+    //console.log(amp2)
     _prevAmp = amp
+    //console.log(s_phase)
     var spec = amp2.multiply(mul_exp_nparray(s_phase,0,1))
+    //console.log(spec)
 //    return np.real(np.fft.fftpack.ifft(spec))
 //    return np.real(spec_ifft)
-    return my_ifft(spec, _winsize)
+    var ret = my_ifft(spec, _winsize)
+    //console.log(ret)
+    return ret
 }
 
 // function _sigmoid(gain){
@@ -321,7 +334,7 @@ function add_signal(signal, frame, winsize, no){
     //console.log("output size:" + String(signal.size))
     var sliced_nparr = slice_nparray(signal,start,end).add(frame)
     for(var i=start;i<end;i++){
-      signal[i] = sliced_nparr[i-start]
+      signal.set(i,sliced_nparr.get(i-start))
     }
 }
 
@@ -366,19 +379,25 @@ function my_ifft(ndarr,input_len){
     ifft_arr.push([ndarr.get(i),0])
   }
   var tmp = np.ifft(np.array(ifft_arr))
-  return tmp.slice(0,1).flatten()
+  return tmp.slice(null,[0,1]).flatten()
 }
 
 function compute_avgpowerspectrum(signal, winsize, window){
     var windownum = Math.round(signal.size / (winsize / 2)) - 1
     var avgpow = np.array(new Array(winsize))
+    for(var i=0;i<winsize;i++){
+      avgpow.set(i,0.0)
+    }
     for(var l=0;l<windownum;l++){
         //console.log("compute_avgpowerspectrum signal.size" + String(signal.size))
 //        var tmp = np.abs(np.fft(get_frame(signal, winsize, l).multiply(window)))
         var real_arr = get_frame(signal, winsize, l).multiply(window)
         //console.log(real_arr)
         var tmp = np.abs(my_fft(real_arr,winsize))
-        avgpow.add(tmp.multiply(tmp))
+        //console.log(tmp)
+        //console.log(tmp.multiply(tmp))
+        avgpow = avgpow.add(tmp.multiply(tmp))
+        //console.log(avgpow)
     }
     return avgpow.divide(windownum * 1.0)
 }
