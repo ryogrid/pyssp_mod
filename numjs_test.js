@@ -10,3 +10,4 @@ console.log(b)
 console.log(b.constructor)
 
 console.log(Math.atan(1.5))
+console.log(true + false)

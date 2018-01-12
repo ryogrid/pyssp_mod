@@ -296,7 +296,7 @@ function my_angle(ndarr){
 
 function compute_by_noise_pow(signal, n_pow){
     //console.log(signal.multiply(_window))
-    var s_spec = my_fft(signal.multiply(_window),_winsize)
+    var s_spec = my_fft(signal.multiply(_window),_window.size)
     //console.log(s_spec) //error
     var s_amp = my_abs(s_spec)
     var s_phase = my_angle(s_spec)
@@ -353,7 +353,7 @@ function compute_by_noise_pow(signal, n_pow){
 
 //    return np.real(np.fft.fftpack.ifft(spec))
 //    return np.real(spec_ifft)
-    var ret = my_ifft(spec, _winsize)
+    var ret = my_ifft(spec, spec.size)
     //console.log(ret)
     return my_real(ret)
 }
@@ -379,8 +379,8 @@ function _calc_aposteriori_snr(s_amp, n_pow){
 function _calc_apriori_snr(gamma){
     // return _alpha * _G ** 2.0 * _prevGamma +\
     //     (1.0 - _alpha) * np.maximum(gamma - 1.0, 0.0)  # a priori s/n ratio
-    return _G.multiply(_G).multiply(_prevGamma).multiply(_alpha).add(
-        maximum_nparray(gamma.add(-1.0), 0.0).add(1.0 - _alpha))  // a priori s/n ratio
+    return (_G.multiply(_G).multiply(_prevGamma).multiply(_alpha)).add(
+        maximum_nparray(gamma.add(-1.0), 0.0).multiply(1.0 - _alpha))  // a priori s/n ratio
 }
 
 // function _calc_apriori_snr2(gamma, n_pow){
@@ -509,7 +509,7 @@ function compute_avgpowerspectrum(signal, winsize, window){
 //        var tmp = np.abs(np.fft(get_frame(signal, winsize, l).multiply(window)))
         var real_arr = get_frame(signal, winsize, l).multiply(window)
         //console.log(real_arr)
-        var tmp = my_abs(my_fft(real_arr,winsize))
+        var tmp = my_abs(my_fft(real_arr,real_arr.size))
         //console.log(tmp)
         //console.log(tmp.multiply(tmp))
         avgpow = avgpow.add(tmp.multiply(tmp))
