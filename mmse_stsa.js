@@ -264,14 +264,15 @@ function compute_by_noise_pow(signal, n_pow){
     //console.log(s_phase)
     //var spec = amp2.multiply(mul_exp_nparray(s_phase,0,1))
     var mul_exp = mul_exp_nparray(s_phase,0,1)
-    var spec = new Array(_winsize)
+    var spec = []
     for(var i=0;i<_winsize;i++){
       var amp2_val = amp2.get(i)
       var mul_exp_val = mul_exp.get(i)
       spec.push([amp2_val*mul_exp_val[0],amp2_val*mul_exp_val[1]])
     }
-    spec = np.array(spec)
     //console.log(spec)
+    spec = np.array(spec)
+
 //    return np.real(np.fft.fftpack.ifft(spec))
 //    return np.real(spec_ifft)
     var ret = my_ifft(spec, _winsize)
@@ -379,6 +380,7 @@ function my_fft(ndarr,input_len){
     fft_arr.push([ndarr.get(i),0])
   }
   var tmp = np.fft(np.array(fft_arr))
+  //console.log(tmp)
   return tmp.slice(null,[0,1]).flatten()
 }
 
