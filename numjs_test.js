@@ -8,3 +8,5 @@ var b = nj.array([1,2,3,4,5,6])
 b.add(nj.array([1,1,1,1,1,1]))
 console.log(b)
 console.log(b.constructor)
+
+console.log(Math.atan(1.5))

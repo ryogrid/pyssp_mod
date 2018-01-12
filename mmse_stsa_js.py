@@ -85,6 +85,8 @@ def compute_by_noise_pow(signal, n_pow):
     s_spec = np.fft.fftpack.fft(signal * _window)
     s_amp = np.absolute(s_spec)
     s_phase = np.angle(s_spec)
+    #for idx in xrange(len(s_phase)):
+    #    print(s_phase[idx])
     gamma = _calc_aposteriori_snr(s_amp, n_pow)
     xi = _calc_apriori_snr(gamma)
     _prevGamma = gamma

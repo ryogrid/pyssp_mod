@@ -24,11 +24,11 @@ var _ratio = null
 var _constant = null
 var _gamma15 = null
 
-function op2_naprray(op1,op2,fnk){
+function op2_nparray(op1,op2,fnk){
     var arr_len = op1.size
     var is_op2_arr = false
     var ret_arr = np.array(new Array(arr_len))
-    if(op2.constructor === np.NdArray){
+    if(op2 instanceof np.NdArray){
       is_op2_arr = true
     }
     for(var i=0;i<arr_len;i++){
@@ -37,15 +37,16 @@ function op2_naprray(op1,op2,fnk){
         op2_val = op2.get(i)
       }
       ret_arr.set(i,fnk(op1.get(i),op2_val))
+      //console.log(fnk(op1.get(i),op2_val))
     }
     return ret_arr
 }
 
-function op1_naprray(op1,fnk){
+function op1_nparray(op1,fnk){
     var arr_len = op1.size
     var is_op1_arr = false
     var ret_arr = np.array(new Array(arr_len))
-    if(op1.constructor === np.NdArray){
+    if(op1 instanceof np.NdArray){
       is_op1_arr = true
     }
     for(var i=0;i<arr_len;i++){
@@ -59,31 +60,31 @@ function op1_naprray(op1,fnk){
 }
 
 function my_abs(op1){
-    return op1_naprray(op1,math.abs)
+    return op1_nparray(op1,math.abs)
 }
 
 function my_exp(op1){
-    return op1_naprray(op1,math.exp)
+    return op1_nparray(op1,math.exp)
 }
 
 function my_sqrt(op1){
-    return op1_naprray(op1,math.sqrt)
+    return op1_nparray(op1,math.sqrt)
 }
 
 function my_multiply(op1,op2){
-    return op2_naprray(op1,op2,math.multiply)
+    return op2_nparray(op1,op2,math.multiply)
 }
 
 function my_add(op1,op2){
-    return op2_naprray(op1,op2,math.add)
+    return op2_nparray(op1,op2,math.add)
 }
 
 function my_division(op1,op2){
-    return op2_naprray(op1,op2,math.divide)
+    return op2_nparray(op1,op2,math.divide)
 }
 
 function my_real(op1){
-    return op1_naprray(op1,function(val){return val.re})
+    return op1_nparray(op1,function(val){return val.re})
 }
 
 // result doesn't contain index *end*
@@ -278,7 +279,17 @@ function my_angle(ndarr){
   var arr_len = _winsize
   var ret_arr = np.array(new Array(arr_len))
   for(var i=0;i<arr_len;i++){
-    ret_arr.set(i, math.atan(ndarr.get(i))*2)
+    //ret_arr.set(i, math.atan(ndarr.get(i))*2)
+    var val = ndarr.get(i)
+    var atan_ret = null
+    if(val.im != 0){
+      atan_ret = Math.atan(val.re/val.im)
+    }else {
+      atan_ret = 0.0
+    }
+
+    ret_arr.set(i,atan_ret*2)
+    //console.log(ret_arr.get(i))
   }
   return ret_arr
 }
@@ -286,9 +297,10 @@ function my_angle(ndarr){
 function compute_by_noise_pow(signal, n_pow){
     //console.log(signal.multiply(_window))
     var s_spec = my_fft(signal.multiply(_window),_winsize)
+    //console.log(s_spec) //error
     var s_amp = my_abs(s_spec)
     var s_phase = my_angle(s_spec)
-    console.log(s_phase)
+    //console.log(s_phase)  // zero only arr
     var gamma = _calc_aposteriori_snr(s_amp, n_pow)
     var xi = _calc_apriori_snr(gamma)
     //console.log(s_amp)
@@ -325,7 +337,7 @@ function compute_by_noise_pow(signal, n_pow){
     var amp = _G.multiply(s_amp)
     amp = maximum_nparray(amp, 0.0)
     var amp2 = amp.multiply(_ratio).add(s_amp.multiply(1.0 - _ratio))
-    //console.log(amp2)
+    //console.log(amp2) //OK
     _prevAmp = amp
     //console.log(s_phase)
     //var spec = amp2.multiply(mul_exp_nparray(s_phase,0,1))
@@ -336,7 +348,7 @@ function compute_by_noise_pow(signal, n_pow){
     //   var mul_exp_val = mul_exp.get(i)
     //   spec.push([amp2_val*mul_exp_val[0],amp2_val*mul_exp_val[1]])
     // }
-    //console.log(spec)
+    //console.log(spec) //error
     //spec = np.array(spec)
 
 //    return np.real(np.fft.fftpack.ifft(spec))
@@ -442,18 +454,22 @@ function get_window(winsize, no){
 
 function my_fft(ndarr,input_len){
   var fft_arr = []
-  if(ndarr.get(0).constructor == math.Complex){
+  if(math.typeof(ndarr.get(0)) == "Complex"){
     for(var i=0;i<input_len;i++){
+      //console.log(ndarr.get(i))
       fft_arr.push([ndarr.get(i).re,ndarr.get(i).im])
     }
   }else{
     for(var i=0;i<input_len;i++){
+      //console.log(ndarr.get(i))
       fft_arr.push([ndarr.get(i),0])
     }
   }
   var tmp = np.fft(np.array(fft_arr))
+  //console.log(tmp) //OK
   var ret_arr = np.array(new Array(input_len))
   for(var i=0;i<input_len;i++){
+    //console.log(tmp.get(i,0)) //OK
     ret_arr.set(i,math.complex(tmp.get(i,0),tmp.get(i,1)))
   }
   //console.log(tmp)
@@ -462,12 +478,14 @@ function my_fft(ndarr,input_len){
 
 function my_ifft(ndarr,input_len){
   var fft_arr = []
-  if(ndarr.get(0).constructor == math.Complex){
+  if(math.typeof(ndarr.get(0)) == "Complex"){
     for(var i=0;i<input_len;i++){
+      //console.log(ndarr.get(i))
       fft_arr.push([ndarr.get(i).re,ndarr.get(i).im])
     }
   }else{
     for(var i=0;i<input_len;i++){
+      //console.log(ndarr.get(i))
       fft_arr.push([ndarr.get(i),0])
     }
   }
@@ -540,7 +558,7 @@ for(var i=0;i<frame_num;i++){
 }
 
 var elapsed_ms = new Date().getTime() - start_ms
-console.log('elapsed time at read data：' + String(elapsed_ms) + "sec")
+console.log('elapsed time at read data：' + String(elapsed_ms) + "ms")
 
     //signal, params = read("./tools/asakai60.wav", 512)
     //     params = ((wf.getnchannels(), wf.getsampwidth(),
