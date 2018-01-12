@@ -24,6 +24,68 @@ var _ratio = null
 var _constant = null
 var _gamma15 = null
 
+function op2_naprray(op1,op2,fnk){
+    var arr_len = op1.size
+    var is_op2_arr = false
+    var ret_arr = np.array(new Array(arr_len))
+    if(op2.constructor === np.NdArray){
+      is_op2_arr = true
+    }
+    for(var i=0;i<arr_len;i++){
+      var op2_val = op2
+      if(is_op2_arr){
+        op2_val = op2.get(i)
+      }
+      ret_arr.set(i,fnk(op1.get(i),op2_val))
+    }
+    return ret_arr
+}
+
+function op1_naprray(op1,fnk){
+    var arr_len = op1.size
+    var is_op1_arr = false
+    var ret_arr = np.array(new Array(arr_len))
+    if(op1.constructor === np.NdArray){
+      is_op1_arr = true
+    }
+    for(var i=0;i<arr_len;i++){
+      var op1_val = op1
+      if(is_op1_arr){
+        op1_val = op1.get(i)
+      }
+      ret_arr.set(i,fnk(op1.get(i)))
+    }
+    return ret_arr
+}
+
+function my_abs(op1){
+    return op1_naprray(op1,math.abs)
+}
+
+function my_exp(op1){
+    return op1_naprray(op1,math.exp)
+}
+
+function my_sqrt(op1){
+    return op1_naprray(op1,math.sqrt)
+}
+
+function my_multiply(op1,op2){
+    return op2_naprray(op1,op2,math.multiply)
+}
+
+function my_add(op1,op2){
+    return op2_naprray(op1,op2,math.add)
+}
+
+function my_division(op1,op2){
+    return op2_naprray(op1,op2,math.divide)
+}
+
+function my_real(op1){
+    return op1_naprray(op1,function(val){return val.re})
+}
+
 // result doesn't contain index *end*
 function slice_nparray(arr,begin,end){
   var ret_len = end - begin
@@ -46,7 +108,10 @@ function mul_exp_nparray(arr,real,imaginary){
   var x = math.complex(real, imaginary)
   for(var i=0;i<arr_len;i++){
     var tmp = math.exp(math.multiply(arr.get(i),x))
-    ret.set(i,[tmp.re,tmp.im])
+    //console.log(arr.get(i))
+    //console.log(math.multiply(arr.get(i),x))
+    //console.log(tmp)
+    ret.set(i,tmp)
     //console.log(math.exp(math.multiply(arr.get(i),x)))
   }
   return ret
@@ -56,7 +121,7 @@ function maximum_nparray(arr,val){
   var arr_len = _winsize
   var ret = np.array(new Array(arr_len))
   for(var i=0;i<arr_len;i++){
-    ret.set(i,Math.max(arr.get(i),val))
+    ret.set(i,math.max(arr.get(i),val))
   }
   return ret
 }
@@ -213,7 +278,7 @@ function my_angle(ndarr){
   var arr_len = _winsize
   var ret_arr = np.array(new Array(arr_len))
   for(var i=0;i<arr_len;i++){
-    ret_arr.set(i, Math.atan(ndarr.get(i))*2)
+    ret_arr.set(i, math.atan(ndarr.get(i))*2)
   }
   return ret_arr
 }
@@ -221,8 +286,9 @@ function my_angle(ndarr){
 function compute_by_noise_pow(signal, n_pow){
     //console.log(signal.multiply(_window))
     var s_spec = my_fft(signal.multiply(_window),_winsize)
-    var s_amp = np.abs(s_spec)
+    var s_amp = my_abs(s_spec)
     var s_phase = my_angle(s_spec)
+    console.log(s_phase)
     var gamma = _calc_aposteriori_snr(s_amp, n_pow)
     var xi = _calc_apriori_snr(gamma)
     //console.log(s_amp)
@@ -264,20 +330,20 @@ function compute_by_noise_pow(signal, n_pow){
     //console.log(s_phase)
     //var spec = amp2.multiply(mul_exp_nparray(s_phase,0,1))
     var mul_exp = mul_exp_nparray(s_phase,0,1)
-    var spec = []
-    for(var i=0;i<_winsize;i++){
-      var amp2_val = amp2.get(i)
-      var mul_exp_val = mul_exp.get(i)
-      spec.push([amp2_val*mul_exp_val[0],amp2_val*mul_exp_val[1]])
-    }
+    var spec = my_multiply(amp2,mul_exp)
+    // for(var i=0;i<_winsize;i++){
+    //   var amp2_val = amp2.get(i)
+    //   var mul_exp_val = mul_exp.get(i)
+    //   spec.push([amp2_val*mul_exp_val[0],amp2_val*mul_exp_val[1]])
+    // }
     //console.log(spec)
-    spec = np.array(spec)
+    //spec = np.array(spec)
 
 //    return np.real(np.fft.fftpack.ifft(spec))
 //    return np.real(spec_ifft)
     var ret = my_ifft(spec, _winsize)
     //console.log(ret)
-    return ret
+    return my_real(ret)
 }
 
 // function _sigmoid(gain){
@@ -376,17 +442,42 @@ function get_window(winsize, no){
 
 function my_fft(ndarr,input_len){
   var fft_arr = []
-  for(var i=0;i<input_len;i++){
-    fft_arr.push([ndarr.get(i),0])
+  if(ndarr.get(0).constructor == math.Complex){
+    for(var i=0;i<input_len;i++){
+      fft_arr.push([ndarr.get(i).re,ndarr.get(i).im])
+    }
+  }else{
+    for(var i=0;i<input_len;i++){
+      fft_arr.push([ndarr.get(i),0])
+    }
   }
   var tmp = np.fft(np.array(fft_arr))
+  var ret_arr = np.array(new Array(input_len))
+  for(var i=0;i<input_len;i++){
+    ret_arr.set(i,math.complex(tmp.get(i,0),tmp.get(i,1)))
+  }
   //console.log(tmp)
-  return tmp.slice(null,[0,1]).flatten()
+  return ret_arr
 }
 
 function my_ifft(ndarr,input_len){
-  var tmp = np.ifft(ndarr)
-  return tmp.slice(null,[0,1]).flatten()
+  var fft_arr = []
+  if(ndarr.get(0).constructor == math.Complex){
+    for(var i=0;i<input_len;i++){
+      fft_arr.push([ndarr.get(i).re,ndarr.get(i).im])
+    }
+  }else{
+    for(var i=0;i<input_len;i++){
+      fft_arr.push([ndarr.get(i),0])
+    }
+  }
+  var tmp = np.ifft(np.array(fft_arr))
+  var ret_arr = np.array(new Array(input_len))
+  for(var i=0;i<input_len;i++){
+    ret_arr.set(i,math.complex(tmp.get(i,0),tmp.get(i,1)))
+  }
+  //console.log(tmp)
+  return ret_arr
 }
 
 function compute_avgpowerspectrum(signal, winsize, window){
@@ -400,7 +491,7 @@ function compute_avgpowerspectrum(signal, winsize, window){
 //        var tmp = np.abs(np.fft(get_frame(signal, winsize, l).multiply(window)))
         var real_arr = get_frame(signal, winsize, l).multiply(window)
         //console.log(real_arr)
-        var tmp = np.abs(my_fft(real_arr,winsize))
+        var tmp = my_abs(my_fft(real_arr,winsize))
         //console.log(tmp)
         //console.log(tmp.multiply(tmp))
         avgpow = avgpow.add(tmp.multiply(tmp))
@@ -438,13 +529,18 @@ var signal = np.array(base_arr)
 //   signal.set(i,0)
 // }
 
-var sample_str = fs.readFileSync('./sample60.txt',"ascii");
-var splited = sample_str.split(",");
+var start_ms = new Date().getTime()
+
+var sample_str = fs.readFileSync('./sample60.txt',"ascii")
+var splited = sample_str.split(",")
 for(var i=0;i<frame_num;i++){
-  signal.set(i,Number(splited[i]));
+  signal.set(i,Number(splited[i]))
   // console.log(i)
   // console.log(Number(splited[i]))
 }
+
+var elapsed_ms = new Date().getTime() - start_ms
+console.log('elapsed time at read data：' + String(elapsed_ms) + "sec")
 
     //signal, params = read("./tools/asakai60.wav", 512)
     //     params = ((wf.getnchannels(), wf.getsampwidth(),
@@ -465,17 +561,17 @@ var output = noise_reduction(signal,params,_winsize,window,null,300)
 //        l,r = separate_channels(signal)
 //        write(params, uniting_channles(noise_reduction(l,params,512,window,null,300),noise_reduction(r,params,512,window,null,300)))
 
-var result_str = "";
+var result_str = ""
 for(var i=0;i<output.size;i++){
   if(i==0){
-    result_str = String(output.get(i)) + "," + String(output.get(i));
+    result_str = String(output.get(i)) + "," + String(output.get(i))
   }else{
-    result_str = result_str + "," + String(output.get(i)) + "," + String(output.get(i));
+    result_str = result_str + "," + String(output.get(i)) + "," + String(output.get(i))
   }
 }
 
-var wstream = fs.createWriteStream('./samples60_pyssp_mmsestsa.txt');
+var wstream = fs.createWriteStream('./samples60_pyssp_mmsestsa.txt')
 wstream.write(result_str, (err) => {
-  if (err) throw err;
-    console.log('The file has been saved!');
-});
+  if (err) throw err
+    console.log('The file has been saved!')
+})
