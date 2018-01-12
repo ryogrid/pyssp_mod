@@ -104,7 +104,7 @@ function slice_nparray(arr,begin,end){
 }
 
 function mul_exp_nparray(arr,real,imaginary){
-  var arr_len = _winsize
+  var arr_len = arr.size
   var ret = np.array(new Array(arr_len))
   var x = math.complex(real, imaginary)
   for(var i=0;i<arr_len;i++){
@@ -119,7 +119,7 @@ function mul_exp_nparray(arr,real,imaginary){
 }
 
 function maximum_nparray(arr,val){
-  var arr_len = _winsize
+  var arr_len = arr.size
   var ret = np.array(new Array(arr_len))
   for(var i=0;i<arr_len;i++){
     ret.set(i,math.max(arr.get(i),val))
@@ -128,7 +128,7 @@ function maximum_nparray(arr,val){
 }
 
 function i0_nparray(arr){
-  var arr_len = _winsize
+  var arr_len = arr.size
   var ret = np.array(new Array(arr_len))
   for(var i=0;i<arr_len;i++){
     ret.set(i,BESSEL.besseli(arr.get(i),0))
@@ -138,7 +138,7 @@ function i0_nparray(arr){
 }
 
 function i1_nparray(arr){
-  var arr_len = _winsize
+  var arr_len = arr.size
   var ret = np.array(new Array(arr_len))
   for(var i=0;i<arr_len;i++){
     ret.set(i,BESSEL.besseli(arr.get(i),1))
@@ -148,7 +148,7 @@ function i1_nparray(arr){
 }
 
 function less_nparray(arr1,arr2){
-  var arr_len = _winsize
+  var arr_len = arr1.size
   var ret_arr = np.array(new Array(arr_len))
 
   for(var i=0;i<arr_len;i++){
@@ -163,7 +163,7 @@ function less_nparray(arr1,arr2){
 }
 
 function set_with_bool_nparray(arr,bool_arr,val){
-  var arr_len = _winsize
+  var arr_len = arr.size
   var tmp_arr = []
 
   for(var i=0;i<arr_len;i++){
@@ -174,7 +174,7 @@ function set_with_bool_nparray(arr,bool_arr,val){
 }
 
 function copy_with_bool_nparray(arr1,arr2,bool_arr){
-  var arr_len = _winsize
+  var arr_len = arr1.size
   var tmp_arr = []
 
   for(var i=0;i<arr_len;i++){
@@ -185,7 +185,7 @@ function copy_with_bool_nparray(arr1,arr2,bool_arr){
 }
 
 function fill_nparray(arr,val){
-  var arr_len = _winsize
+  var arr_len = arr.size
   var ret = np.array(new Array(arr_len))
   for(var i=0;i<arr_len;i++){
     ret.set(i,val)
@@ -194,7 +194,7 @@ function fill_nparray(arr,val){
 }
 
 function isnan_nparray(arr){
-  var arr_len = _winsize
+  var arr_len = arr.size
   var ret = np.array(new Array(arr_len))
   for(var i=0;i<arr_len;i++){
     if(Number.isNaN(arr.get(i))){
@@ -207,7 +207,7 @@ function isnan_nparray(arr){
 }
 
 function isinf_nparray(arr){
-  var arr_len = _winsize
+  var arr_len = arr.size
   var ret = np.array(new Array(arr_len))
   for(var i=0;i<arr_len;i++){
     if(arr.get(i) == Infinity){
@@ -276,7 +276,7 @@ function __init__(winsize, window, constant, ratio, alpha){
 }
 
 function my_angle(ndarr){
-  var arr_len = _winsize
+  var arr_len = ndarr.size
   var ret_arr = np.array(new Array(arr_len))
   for(var i=0;i<arr_len;i++){
     //ret_arr.set(i, math.atan(ndarr.get(i))*2)
@@ -322,7 +322,7 @@ function compute_by_noise_pow(signal, n_pow){
     set_with_bool_nparray(_G,idx,_constant)
     idx = isnan_nparray(_G).add(isinf_nparray(_G))
 //    var xi_len = xi.size
-    var xi_len = _winsize
+    var xi_len = xi.size
     for(var i=0;i<xi_len;i++){
       if(idx.get(i)){
           xi.set(i,xi.get(i)/(xi.get(i)+1.0))
