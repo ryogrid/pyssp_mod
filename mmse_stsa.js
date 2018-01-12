@@ -433,11 +433,11 @@ function add_signal(signal, frame, winsize, no){
 //     wf.writeframes(s)
 // }
 
-function get_window(winsize, no){
-    var shift = Math.round(winsize / 2)
-    var s = Math.round(no * shift)
-    return (s, s + winsize)
-}
+// function get_window(winsize, no){
+//     var shift = Math.round(winsize / 2)
+//     var s = Math.round(no * shift)
+//     return (s, s + winsize)
+// }
 
 // function separate_channels(signal){
 //     return signal[0::2], signal[1::2]
