@@ -486,12 +486,14 @@ function my_ifft(ndarr,input_len){
   if(math.typeof(ndarr.get(0)) == "Complex"){
     for(var i=0;i<input_len;i++){
       //console.log(ndarr.get(i))
+      //fft_arr.push([ndarr.get(i).im,ndarr.get(i).re])
       fft_arr.push([ndarr.get(i).re,ndarr.get(i).im])
     }
   }else{
     for(var i=0;i<input_len;i++){
       //console.log(ndarr.get(i))
       fft_arr.push([ndarr.get(i),0])
+      //fft_arr.push([0,ndarr.get(i)])
     }
   }
   var tmp = np.ifft(np.array(fft_arr))
