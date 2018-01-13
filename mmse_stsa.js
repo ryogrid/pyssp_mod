@@ -109,6 +109,7 @@ function mul_exp_nparray(arr,real,imaginary){
   var x = math.complex(real, imaginary)
   for(var i=0;i<arr_len;i++){
     var tmp = math.exp(math.multiply(arr.get(i),x))
+    //var tmp = math.exp(arr.get(i))
     //console.log(arr.get(i))
     //console.log(math.multiply(arr.get(i),x))
     //console.log(tmp)
@@ -288,7 +289,7 @@ function my_angle(ndarr){
       atan_ret = 0.0
     }
 
-    ret_arr.set(i,atan_ret*2)
+    ret_arr.set(i,atan_ret)
     //console.log(ret_arr.get(i))
   }
   return ret_arr
@@ -469,8 +470,12 @@ function my_fft(ndarr,input_len){
   //console.log(tmp) //OK
   var ret_arr = np.array(new Array(input_len))
   for(var i=0;i<input_len;i++){
-    //console.log(tmp.get(i,0)) //OK
     ret_arr.set(i,math.complex(tmp.get(i,0),tmp.get(i,1)))
+    // if(i==0){
+    //   ret_arr.set(i,math.complex(tmp.get(i,0),tmp.get(i,1)))
+    // }else{
+    //   ret_arr.set(i,math.complex(tmp.get(i,1),tmp.get(i,0)))
+    // }
   }
   //console.log(tmp)
   return ret_arr
@@ -493,6 +498,11 @@ function my_ifft(ndarr,input_len){
   var ret_arr = np.array(new Array(input_len))
   for(var i=0;i<input_len;i++){
     ret_arr.set(i,math.complex(tmp.get(i,0),tmp.get(i,1)))
+    // if(i==0){
+    //   ret_arr.set(i,math.complex(tmp.get(i,0),tmp.get(i,1)))
+    // }else{
+    //   ret_arr.set(i,math.complex(tmp.get(i,1),tmp.get(i,0)))
+    // }
   }
   //console.log(tmp)
   return ret_arr
