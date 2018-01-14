@@ -12,7 +12,8 @@ var BESSEL = require('bessel')
 
 var frame_num = 2646000;
 var bufferSize = frame_num * 4;
-var all_buffersize = bufferSize + 44;
+var all_buffersize = bufferSize + 44
+var dtype_str = "array"
 
 var _winsize = 512
 var _window = null
@@ -27,7 +28,7 @@ var _gamma15 = null
 function op2_nparray(op1,op2,fnk){
     var arr_len = op1.size
     var is_op2_arr = false
-    var ret_arr = np.array(new Array(arr_len))
+    var ret_arr = np.array(new Array(arr_len),dtype=dtype_str)
     if(op2 instanceof np.NdArray){
       is_op2_arr = true
     }
@@ -45,7 +46,7 @@ function op2_nparray(op1,op2,fnk){
 function op1_nparray(op1,fnk){
     var arr_len = op1.size
     var is_op1_arr = false
-    var ret_arr = np.array(new Array(arr_len))
+    var ret_arr = np.array(new Array(arr_len),dtype=dtype_str)
     if(op1 instanceof np.NdArray){
       is_op1_arr = true
     }
@@ -90,7 +91,7 @@ function my_real(op1){
 // result doesn't contain index *end*
 function slice_nparray(arr,begin,end){
   var ret_len = end - begin
-  var ret_arr = np.array(new Array(ret_len))
+  var ret_arr = np.array(new Array(ret_len),dtype=dtype_str)
   for(var i=begin;i<end;i++){
     //console.log(arr.get(i))
     ret_arr.set(i-begin,arr.get(i))
@@ -106,7 +107,7 @@ function slice_nparray(arr,begin,end){
 
 function mul_exp_nparray(arr,real,imaginary){
   var arr_len = arr.size
-  var ret = np.array(new Array(arr_len))
+  var ret = np.array(new Array(arr_len),dtype=dtype_str)
   var x = math.complex(real, imaginary)
   for(var i=0;i<arr_len;i++){
     var tmp = math.exp(math.multiply(arr.get(i),x))
@@ -122,7 +123,7 @@ function mul_exp_nparray(arr,real,imaginary){
 
 function maximum_nparray(arr,val){
   var arr_len = arr.size
-  var ret = np.array(new Array(arr_len))
+  var ret = np.array(new Array(arr_len),dtype=dtype_str)
   for(var i=0;i<arr_len;i++){
     ret.set(i,math.max(arr.get(i),val))
   }
@@ -131,7 +132,7 @@ function maximum_nparray(arr,val){
 
 function i0_nparray(arr){
   var arr_len = arr.size
-  var ret = np.array(new Array(arr_len))
+  var ret = np.array(new Array(arr_len),dtype=dtype_str)
   for(var i=0;i<arr_len;i++){
     ret.set(i,BESSEL.besseli(arr.get(i),0))
   }
@@ -141,7 +142,7 @@ function i0_nparray(arr){
 
 function i1_nparray(arr){
   var arr_len = arr.size
-  var ret = np.array(new Array(arr_len))
+  var ret = np.array(new Array(arr_len),dtype=dtype_str)
   for(var i=0;i<arr_len;i++){
     ret.set(i,BESSEL.besseli(arr.get(i),1))
   }
@@ -151,7 +152,7 @@ function i1_nparray(arr){
 
 function less_nparray(arr1,arr2){
   var arr_len = arr1.size
-  var ret_arr = np.array(new Array(arr_len))
+  var ret_arr = np.array(new Array(arr_len),dtype=dtype_str)
 
   for(var i=0;i<arr_len;i++){
     if(arr1.get(i) < arr2.get(i)){
@@ -188,7 +189,7 @@ function copy_with_bool_nparray(arr1,arr2,bool_arr){
 
 function fill_nparray(arr,val){
   var arr_len = arr.size
-  var ret = np.array(new Array(arr_len))
+  var ret = np.array(new Array(arr_len),dtype=dtype_str)
   for(var i=0;i<arr_len;i++){
     ret.set(i,val)
   }
@@ -197,7 +198,7 @@ function fill_nparray(arr,val){
 
 function isnan_nparray(arr){
   var arr_len = arr.size
-  var ret = np.array(new Array(arr_len))
+  var ret = np.array(new Array(arr_len),dtype=dtype_str)
   for(var i=0;i<arr_len;i++){
     if(Number.isNaN(arr.get(i))){
       //console.log("isnan true")
@@ -211,7 +212,7 @@ function isnan_nparray(arr){
 
 function isinf_nparray(arr){
   var arr_len = arr.size
-  var ret = np.array(new Array(arr_len))
+  var ret = np.array(new Array(arr_len),dtype=dtype_str)
   for(var i=0;i<arr_len;i++){
     if(arr.get(i) == Infinity){
       //console.log("isinf true")
@@ -224,7 +225,7 @@ function isinf_nparray(arr){
 }
 
 function noise_reduction(signal,params,winsize,window,ss,ntime){
-    var out=np.array(new Array(frame_num))
+    var out=np.array(new Array(frame_num),dtype=dtype_str)
     for(var i=0;i<frame_num;i++){
       out.set(i,0.0)
     }
@@ -275,10 +276,10 @@ function noise_reduction(signal,params,winsize,window,ss,ntime){
 
 function __init__(winsize, window, constant, ratio, alpha){
     _window = window
-    _G = np.array(new Array(winsize))
-    _prevGamma = np.array(new Array(winsize))
+    _G = np.array(new Array(winsize),dtype=dtype_str)
+    _prevGamma = np.array(new Array(winsize),dtype=dtype_str)
     _alpha = alpha
-    _prevAmp = np.array(new Array(winsize))
+    _prevAmp = np.array(new Array(winsize),dtype=dtype_str)
     _ratio = ratio
     _constant = constant
     _gamma15 = math.gamma(1.5)
@@ -286,7 +287,7 @@ function __init__(winsize, window, constant, ratio, alpha){
 
 function my_angle(ndarr){
   var arr_len = ndarr.size
-  var ret_arr = np.array(new Array(arr_len))
+  var ret_arr = np.array(new Array(arr_len),dtype=dtype_str)
   for(var i=0;i<arr_len;i++){
     //ret_arr.set(i, math.atan(ndarr.get(i))*2)
     var val = ndarr.get(i)
@@ -485,9 +486,9 @@ function my_fft(ndarr,input_len){
       fft_arr.push([ndarr.get(i),0])
     }
   }
-  var tmp = np.fft(np.array(fft_arr))
+  var tmp = np.fft(np.array(fft_arr,dtype=dtype_str))
   //console.log(tmp) //OK
-  var ret_arr = np.array(new Array(input_len))
+  var ret_arr = np.array(new Array(input_len),dtype=dtype_str)
   for(var i=0;i<input_len;i++){
     ret_arr.set(i,math.complex(tmp.get(i,0),tmp.get(i,1)))
     // if(i==0){
@@ -515,8 +516,8 @@ function my_ifft(ndarr,input_len){
       //fft_arr.push([0,ndarr.get(i)])
     }
   }
-  var tmp = np.ifft(np.array(fft_arr))
-  var ret_arr = np.array(new Array(input_len))
+  var tmp = np.ifft(np.array(fft_arr,dtype=dtype_str))
+  var ret_arr = np.array(new Array(input_len),dtype=dtype_str)
   for(var i=0;i<input_len;i++){
     ret_arr.set(i,math.complex(tmp.get(i,0),tmp.get(i,1)))
     // if(i==0){
@@ -531,7 +532,7 @@ function my_ifft(ndarr,input_len){
 
 function compute_avgpowerspectrum(signal, winsize, window){
     var windownum = Math.round(signal.size / (winsize / 2)) - 1
-    var avgpow = np.array(new Array(winsize))
+    var avgpow = np.array(new Array(winsize),dtype=dtype_str)
     for(var i=0;i<winsize;i++){
       avgpow.set(i,0.0)
     }
@@ -564,7 +565,7 @@ function compute_avgpowerspectrum(signal, winsize, window){
 // }
 
 function generate_hann_arr(M){
-  var ret_arr = np.array(new Array(M))
+  var ret_arr = np.array(new Array(M),dtype=dtype_str)
   for(i=0;i<M;i++){
     ret_arr.set(i,0.5 - 0.5*Math.cos(2*Math.PI*i/(M-1)))
   }
@@ -573,7 +574,7 @@ function generate_hann_arr(M){
 }
 
 var base_arr = new Array(frame_num)
-var signal = np.array(base_arr)
+var signal = np.array(base_arr,dtype=dtype_str)
 // for(var i=0;i<frame_num;i++){
 //   signal.set(i,0)
 // }

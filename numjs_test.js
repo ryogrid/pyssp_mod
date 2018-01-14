@@ -7,7 +7,7 @@ var a = nj.array([[2,3],[4,5],[6,7]]);
 //console.log(a)
 console.log(a.get(0,0))
 
-var b = nj.array([1,2,3,4,5,6])
+var b = nj.array([1,2,3,4,5,6],dtype="float64")
 b.add(nj.array([1,1,1,1,1,1]))
 console.log(b)
 console.log(b.constructor)
