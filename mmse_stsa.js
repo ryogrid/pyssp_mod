@@ -301,76 +301,76 @@ function my_angle(ndarr){
   return ret_arr
 }
 
-function compute_by_noise_pow(signal, n_pow){
-    //console.log(signal)
-    var s_spec = my_fft(signal,signal.size)
-    var ret = my_ifft(s_spec,s_spec.size)
-    return my_real(ret)
-}
-
 // function compute_by_noise_pow(signal, n_pow){
-//     //console.log(signal.multiply(_window))
-//     var s_spec = my_fft(signal.multiply(_window),signal.size)
-//     //console.log(s_spec) //error
-//     var s_amp = my_abs(s_spec)
-//     var s_phase = my_angle(s_spec)
-//     //console.log(s_phase)  // zero only arr
-//     var gamma = _calc_aposteriori_snr(s_amp, n_pow)
-//     var xi = _calc_apriori_snr(gamma)
-//     //console.log(s_amp)
-//     //console.log(xi)
-//     _prevGamma = gamma
-//     var nu = gamma.multiply(xi).divide((xi.add(1.0)))
-//     //console.log(nu)
-//     _G = (np.sqrt(nu).multiply(_gamma15).divide(gamma)).multiply(np.exp(nu.multiply(-1.0).divide(2.0)))
-//           .multiply((nu.add(1.0).multiply(i0_nparray(nu.divide(2.0)))).add(nu.multiply(i1_nparray(nu.divide(2.0)))))
-//     //console.log(_G)
-//     var idx = less_nparray(s_amp.multiply(s_amp), n_pow)
-//
-//     // _G[idx] = _constant
-//     // idx = np.isnan(_G) + np.isinf(_G)
-//     // _G[idx] = xi[idx] / (xi[idx] + 1.0)
-//     // idx = np.isnan(_G) + np.isinf(_G)
-//     // _G[idx] = _constant
-//
-//     set_with_bool_nparray(_G,idx,_constant)
-//     idx = isnan_nparray(_G).add(isinf_nparray(_G))
-// //    var xi_len = xi.size
-//     var xi_len = xi.size
-//     for(var i=0;i<xi_len;i++){
-//       if(idx.get(i)){
-//           xi.set(i,xi.get(i)/(xi.get(i)+1.0))
-//       }
-//     }
-//     copy_with_bool_nparray(_G,xi,idx)
-//     idx = isnan_nparray(_G).add(isinf_nparray(_G))
-//     set_with_bool_nparray(_G,idx,_constant)
-//
-//     _G = maximum_nparray(_G, 0.0)
-//     //console.log(_G)
-//     var amp = _G.multiply(s_amp)
-//     amp = maximum_nparray(amp, 0.0)
-//     var amp2 = amp.multiply(_ratio).add(s_amp.multiply(1.0 - _ratio))
-//     //console.log(amp2) //OK
-//     _prevAmp = amp
-//     //console.log(s_phase)
-//     //var spec = amp2.multiply(mul_exp_nparray(s_phase,0,1))
-//     var mul_exp = mul_exp_nparray(s_phase,0,1)
-//     var spec = my_multiply(amp2,mul_exp)
-//     // for(var i=0;i<_winsize;i++){
-//     //   var amp2_val = amp2.get(i)
-//     //   var mul_exp_val = mul_exp.get(i)
-//     //   spec.push([amp2_val*mul_exp_val[0],amp2_val*mul_exp_val[1]])
-//     // }
-//     //console.log(spec) //error
-//     //spec = np.array(spec)
-//
-// //    return np.real(np.fft.fftpack.ifft(spec))
-// //    return np.real(spec_ifft)
-//     var ret = my_ifft(spec, spec.size)
-//     //console.log(ret)
+//     //console.log(signal)
+//     var s_spec = my_fft(signal,signal.size)
+//     var ret = my_ifft(s_spec,s_spec.size)
 //     return my_real(ret)
 // }
+
+function compute_by_noise_pow(signal, n_pow){
+    //console.log(signal.multiply(_window))
+    var s_spec = my_fft(signal.multiply(_window),signal.size)
+    //console.log(s_spec) //error
+    var s_amp = my_abs(s_spec)
+    var s_phase = my_angle(s_spec)
+    //console.log(s_phase)  // zero only arr
+    var gamma = _calc_aposteriori_snr(s_amp, n_pow)
+    var xi = _calc_apriori_snr(gamma)
+    //console.log(s_amp)
+    //console.log(xi)
+    _prevGamma = gamma
+    var nu = gamma.multiply(xi).divide((xi.add(1.0)))
+    //console.log(nu)
+    _G = (np.sqrt(nu).multiply(_gamma15).divide(gamma)).multiply(np.exp(nu.multiply(-1.0).divide(2.0)))
+          .multiply((nu.add(1.0).multiply(i0_nparray(nu.divide(2.0)))).add(nu.multiply(i1_nparray(nu.divide(2.0)))))
+    //console.log(_G)
+    var idx = less_nparray(s_amp.multiply(s_amp), n_pow)
+
+    // _G[idx] = _constant
+    // idx = np.isnan(_G) + np.isinf(_G)
+    // _G[idx] = xi[idx] / (xi[idx] + 1.0)
+    // idx = np.isnan(_G) + np.isinf(_G)
+    // _G[idx] = _constant
+
+    set_with_bool_nparray(_G,idx,_constant)
+    idx = isnan_nparray(_G).add(isinf_nparray(_G))
+//    var xi_len = xi.size
+    var xi_len = xi.size
+    for(var i=0;i<xi_len;i++){
+      if(idx.get(i)){
+          xi.set(i,xi.get(i)/(xi.get(i)+1.0))
+      }
+    }
+    copy_with_bool_nparray(_G,xi,idx)
+    idx = isnan_nparray(_G).add(isinf_nparray(_G))
+    set_with_bool_nparray(_G,idx,_constant)
+
+    _G = maximum_nparray(_G, 0.0)
+    //console.log(_G)
+    var amp = _G.multiply(s_amp)
+    amp = maximum_nparray(amp, 0.0)
+    var amp2 = amp.multiply(_ratio).add(s_amp.multiply(1.0 - _ratio))
+    //console.log(amp2) //OK
+    _prevAmp = amp
+    //console.log(s_phase)
+    //var spec = amp2.multiply(mul_exp_nparray(s_phase,0,1))
+    var mul_exp = mul_exp_nparray(s_phase,0,1)
+    var spec = my_multiply(amp2,mul_exp)
+    // for(var i=0;i<_winsize;i++){
+    //   var amp2_val = amp2.get(i)
+    //   var mul_exp_val = mul_exp.get(i)
+    //   spec.push([amp2_val*mul_exp_val[0],amp2_val*mul_exp_val[1]])
+    // }
+    //console.log(spec) //error
+    //spec = np.array(spec)
+
+//    return np.real(np.fft.fftpack.ifft(spec))
+//    return np.real(spec_ifft)
+    var ret = my_ifft(spec, spec.size)
+    //console.log(ret)
+    return my_real(ret)
+}
 
 // function _sigmoid(gain){
 //     for i in xrange(len(gain)):
