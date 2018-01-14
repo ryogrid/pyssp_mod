@@ -393,7 +393,7 @@ function _calc_aposteriori_snr(s_amp, n_pow){
 function _calc_apriori_snr(gamma){
     // return _alpha * _G ** 2.0 * _prevGamma +\
     //     (1.0 - _alpha) * np.maximum(gamma - 1.0, 0.0)  # a priori s/n ratio
-    return (_G.multiply(_G).multiply(_prevGamma).multiply(_alpha)).add(
+    return (_prevGamma.multiply(_G.multiply(_G)).multiply(_alpha)).add(
         maximum_nparray(gamma.add(-1.0), 0.0).multiply(1.0 - _alpha))  // a priori s/n ratio
 }
 
