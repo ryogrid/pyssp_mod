@@ -200,6 +200,7 @@ function isnan_nparray(arr){
   var ret = np.array(new Array(arr_len))
   for(var i=0;i<arr_len;i++){
     if(Number.isNaN(arr.get(i))){
+      //console.log("isnan true")
       ret.set(i,true)
     }else{
       ret.set(i,false)
@@ -213,6 +214,7 @@ function isinf_nparray(arr){
   var ret = np.array(new Array(arr_len))
   for(var i=0;i<arr_len;i++){
     if(arr.get(i) == Infinity){
+      //console.log("isinf true")
       ret.set(i,true)
     }else{
       ret.set(i,false)
@@ -322,8 +324,12 @@ function compute_by_noise_pow(signal, n_pow){
     _prevGamma = gamma
     var nu = gamma.multiply(xi).divide((xi.add(1.0)))
     //console.log(nu)
-    _G = (np.sqrt(nu).multiply(_gamma15).divide(gamma)).multiply(np.exp(nu.multiply(-1.0).divide(2.0)))
-          .multiply((nu.add(1.0).multiply(i0_nparray(nu.divide(2.0)))).add(nu.multiply(i1_nparray(nu.divide(2.0)))))
+//    _G = (np.sqrt(nu).multiply(_gamma15).divide(gamma)).multiply(np.exp(nu.multiply(-1.0).divide(2.0)))
+//          .multiply((nu.add(1.0).multiply(i0_nparray(nu.divide(2.0)))).add(nu.multiply(i1_nparray(nu.divide(2.0)))))
+    _G = (np.sqrt(nu).multiply(_gamma15).divide(gamma))
+    _G = _G.multiply(np.exp(nu.multiply(-1.0).divide(2.0)))
+    _G = _G.multiply((nu.add(1.0).multiply(i0_nparray(nu.divide(2.0)))).add(nu.multiply(i1_nparray(nu.divide(2.0)))))
+
     //console.log(_G)
     var idx = less_nparray(s_amp.multiply(s_amp), n_pow)
 
