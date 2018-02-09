@@ -21,7 +21,8 @@ import os.path
 input_len = 120
 hidden_dim = 300
 batch_size = 256
-epocs = 20
+epocs = 200
+_window = None
 
 def uniting_channles(leftsignal, rightsignal):
     ret = []
@@ -95,7 +96,7 @@ def preprocess(signal):
     signal = np.reshape(signal, (q, input_len))
 
     for idx in xrange(0, q):
-        signal[idx] = np.fft.fftpack.fft(signal[idx])
+        signal[idx] = np.fft.fftpack.fft(signal[idx] * _window)
 
     s_amp = np.absolute(signal)
     s_phase = np.angle(signal)
@@ -112,7 +113,7 @@ def denoise(signal, model):
 
     spec = pred_amps * np.exp(s_phase * 1j)
     for idx in xrange(0, q):
-        spec[idx] = np.fft.fftpack.ifft(spec[idx])
+        spec[idx] = np.fft.fftpack.ifft(spec[idx]) / _window
 
     ret = spec.flatten()
     ret = np.r_[ret, signal[len(signal)-mod:len(signal)]]
@@ -159,6 +160,8 @@ if __name__ == '__main__':
     l_input_test_ = l_input_test
     l_output_test_ = l_output_test[0:9371392]
     r_input_test_ = r_input_test
+
+    _window = sp.hanning(input_len)
     
     model = train(l_input_train_, l_output_train_, l_input_test_, l_output_test_)
 
