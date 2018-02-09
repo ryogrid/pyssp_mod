@@ -36,14 +36,14 @@ def train(train_in, train_out, test_in, test_out):
 
     model.add(Dense(input_len, activation='relu', input_shape=(input_len,)))
     model.add(Dense(hidden_dim, activation='relu'))
-    model.add(Dense(input_len,  activation='relu'))
+    model.add(Dense(input_len,  activation='sigmoid'))
 
     model.compile(optimizer='adam', loss='binary_crossentropy')
 
-    x_train_in = preprocess(train_in)
-    x_train_out = preprocess(train_out)
-    y_test_in = preprocess(test_in)
-    y_test_out = preprocess(test_out)
+    x_train_in, _ = preprocess(train_in)
+    x_train_out, _ = preprocess(train_out)
+    y_test_in, _ = preprocess(test_in)
+    y_test_out, _ = preprocess(test_out)
 
     model.fit(x_train_in, x_train_out,
                 nb_epoch=epocs,
@@ -51,7 +51,7 @@ def train(train_in, train_out, test_in, test_out):
                 shuffle=False,
                 validation_data=(y_test_in, y_test_out))
 
-    model.save_weights('./denoise.weight')
+    #model.save_weights('./denoise.weight')
     #autoencoder.load_weights('autoencoder.h5')
 
     return model
@@ -98,19 +98,19 @@ def preprocess(signal):
         signal[idx] = np.fft.fftpack.fft(signal[idx])
 
     s_amp = np.absolute(signal)
-    return s_amp
+    s_phase = np.angle(signal)
+    return s_amp, s_phase
 
 def denoise(signal, model):
     signal_len = len(signal)
 
-    input = preprocess(signal)
-    s_amp = np.absolute(input)
+    amps, s_phase = preprocess(signal)
 
     q, mod = divmod(signal_len,input_len)
 
-    pred = model.predict(input, batch_size=batch_size)
+    pred_amps = model.predict(amps, batch_size=batch_size)
 
-    spec = s_amp * np.exp(pred * 1j)
+    spec = pred_amps * np.exp(s_phase * 1j)
     for idx in xrange(0, q):
         spec[idx] = np.fft.fftpack.ifft(spec[idx])
 
