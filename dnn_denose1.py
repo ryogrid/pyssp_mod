@@ -30,10 +30,11 @@ def train(train_in, train_out, test_in, test_out):
 
     input_len = 120
     hidden_dim = 300
+    batch_size = 256
 
-    model.add(Dense(input_len, activation='relu', input_shape=(input_len)))
+    model.add(Dense(input_len, activation='relu', input_shape=(input_len,)))
     model.add(Dense(hidden_dim, activation='relu'))
-    model.add(Dense(input_len, activation='relu'))
+    model.add(Dense(input_len,  activation='relu'))
 
     model.compile(optimizer='adam', loss='binary_crossentropy')
 
@@ -66,7 +67,7 @@ def train(train_in, train_out, test_in, test_out):
     return model
 
 
-def write(param,signal):
+def write(params,signal):
     st = tempfile.TemporaryFile()
     wf=wave.open(st,'wb')
     wf.setparams(params)
@@ -112,8 +113,8 @@ def denoise(signal, model):
     input = np.reshape(input, (q, input_len))
     
     pred = model.predict(input, batch_size=256)
-    s_phase = np.reshape(pred, (q*input_len))
-    s_phase = np.r_(s_pase, signal[len(signal)-q:len(signal)])
+    s_phase = pred.flatten()
+    s_phase = np.r_[s_phase, signal[len(signal)-mod:len(signal)]]
 
     spec = s_amp * np.exp(s_phase * 1j)
     return np.real(np.fft.fftpack.ifft(spec))
@@ -146,6 +147,7 @@ if __name__ == '__main__':
     l_output_train = l_output_train[0:1000]
     l_input_test = l_input_test[0:1000]
     l_output_test = l_output_test[0:1000]
+    r_input_test = r_input_test[0:1000]
 
     l_input_train_ = preprocess(l_input_train)
     l_output_train_ = preprocess(l_output_train)
