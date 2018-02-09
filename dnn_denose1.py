@@ -117,7 +117,7 @@ def denoise(signal, model):
     ret = spec.flatten()
     ret = np.r_[ret, signal[len(signal)-mod:len(signal)]]
 
-    return ret
+    return np.real(ret)
 
 def read_signal(filename, winsize):
     wf = wave.open(filename, 'rb')
