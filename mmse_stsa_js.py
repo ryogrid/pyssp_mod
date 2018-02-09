@@ -211,7 +211,7 @@ def calc_kurtosis(samples):
 
 
 if __name__ == '__main__':
-    signal, params = read("./asakai60.wav", 512)
+    signal, params = read("./asakai13_train.wav", 512)
 
     window = sp.hanning(512)
     import os.path
