@@ -19,8 +19,8 @@ from keras.models import Model, Sequential
 import os.path
 
 #banks = 40
-input_len = 120
-hidden_dim = 80
+input_len = 2000
+hidden_dim = 1000
 batch_size = 256
 epocs = 400
 _window = None
@@ -94,20 +94,20 @@ def separate_channels(signal):
 
 def preprocess(signal):
     q, mod = divmod(len(signal),input_len)
-    signal = signal[0:len(signal) - mod]
+    signal2 = signal[0:len(signal) - mod]
     qq, mod = divmod(len(signal),input_len / 2)
     for idx in xrange(0, qq-2):
-        signal[idx*(input_len/2):idx*(input_len/2)+input_len] * _window
-    signal = np.reshape(signal, (q, input_len))
+        signal2[idx*(input_len/2):idx*(input_len/2)+input_len] *= _window
+    signal2 = np.reshape(signal2, (q, input_len))
 #    tmp_arr = np.array([])
 
     for idx in xrange(0, q):
-        signal[idx] = np.fft.fftpack.fft(signal[idx])
+        signal2[idx] = np.fft.fftpack.fft(signal2[idx])
 #        signal[idx] = np.fft.fftpack.fft(signal[idx])
 #        tmp_arr = np.r_[tmp_arr, fbank(signal[idx*input_len:(idx+1)*input_len],samplerate=44100,winlen=0.025,winstep=0.01,nfilt=banks,nfft=input_len,lowfreq=0,highfreq=None,preemph=0.97)[0][0]]
 
-    s_amp = np.absolute(signal)
-    s_phase = np.angle(signal)
+    s_amp = np.absolute(signal2)
+    s_phase = np.angle(signal2)
     return s_amp, s_phase
 
 def denoise(signal, model):
@@ -126,7 +126,7 @@ def denoise(signal, model):
     ret = spec.flatten()
     qq, mod2 = divmod(signal_len, input_len/2)
     for idx in xrange(0, qq-2):
-        signal[idx*(input_len/2):idx*(input_len/2)+input_len] / _window
+        ret[idx*(input_len/2):idx*(input_len/2)+input_len] /= _window
 
     ret = np.r_[ret, signal[len(signal)-mod:len(signal)]]
 
