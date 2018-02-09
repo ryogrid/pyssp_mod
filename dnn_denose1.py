@@ -18,19 +18,21 @@ from keras.layers import Dense
 from keras.models import Model, Sequential
 import os.path
 
+input_len = 120
+hidden_dim = 300
+batch_size = 256
+epocs = 20
+
 def uniting_channles(leftsignal, rightsignal):
     ret = []
     for i, j in zip(leftsignal, rightsignal):
         ret.append(i)
         ret.append(j)
-    return np.array(ret, np.float32)
+#    return np.array(ret, np.float32)
+    return np.array(ret, np.complex)
 
 def train(train_in, train_out, test_in, test_out):
     model = Sequential()
-
-    input_len = 120
-    hidden_dim = 300
-    batch_size = 256
 
     model.add(Dense(input_len, activation='relu', input_shape=(input_len,)))
     model.add(Dense(hidden_dim, activation='relu'))
@@ -38,43 +40,36 @@ def train(train_in, train_out, test_in, test_out):
 
     model.compile(optimizer='adam', loss='binary_crossentropy')
 
-    #autoencoder.save_weights('autoencoder.h5')
-    #autoencoder.load_weights('autoencoder.h5')
-
-    q, mod = divmod(len(train_in),input_len)
-    train_in = train_in[0:len(train_in) - mod]
-    x_train_in = np.reshape(train_in, (q, input_len))
-
-    q, mod = divmod(len(train_out),input_len)
-    train_out = train_out[0:len(train_out) - mod]
-    x_train_out = np.reshape(train_out, (q, input_len))
-
-    q, mod = divmod(len(test_in),input_len)
-    test_in = test_in[0:len(test_in) - mod]
-    y_test_in = np.reshape(test_in, (q, input_len))
-
-    q, mod = divmod(len(test_out),input_len)
-    test_out = train_out[0:len(test_out) - mod]
-    y_test_out = np.reshape(test_out, (q, input_len))
-
+    x_train_in = preprocess(train_in)
+    x_train_out = preprocess(train_out)
+    y_test_in = preprocess(test_in)
+    y_test_out = preprocess(test_out)
 
     model.fit(x_train_in, x_train_out,
-                nb_epoch=1,
-                batch_size=256,
-                shuffle=True,
+                nb_epoch=epocs,
+                batch_size=batch_size,
+                shuffle=False,
                 validation_data=(y_test_in, y_test_out))
+
+    model.save_weights('./denoise.weight')
+    #autoencoder.load_weights('autoencoder.h5')
 
     return model
 
 
 def write(params,signal):
-    st = tempfile.TemporaryFile()
-    wf=wave.open(st,'wb')
+#    st = tempfile.TemporaryFile()
+#    wf=wave.open(st,'wb')
+    wf=wave.open("./dnn_denoised.wav",'wb')
     wf.setparams(params)
     s=sp.int16(signal*32767.0).tostring()
     wf.writeframes(s)
-    st.seek(0)
-    print st.read()
+    wf.close()
+#    st.seek(0)
+#    print st.read()
+
+#    with open("dnn_denoised.wav", "wb") as fout:
+#        fout.write(st.read())
 
 def read(fname,winsize):
     if fname =="-":
@@ -85,7 +80,7 @@ def read(fname,winsize):
                    wf.getframerate(), wf.getnframes(),
                    wf.getcomptype(), wf.getcompname()))
         siglen=((int )(len(str)/2/winsize) + 1) * winsize
-        signal=sp.zeros(siglen, sp.float32)
+        signal=sp.zeros(siglen, sp.complex)
         signal[0:len(str)/2] = sp.float32(sp.fromstring(str,sp.int16))/32767.0
         return signal,params
     else:
@@ -95,29 +90,34 @@ def separate_channels(signal):
     return signal[0::2], signal[1::2] 
 
 def preprocess(signal):
-    s_spec = np.fft.fftpack.fft(signal)
-    s_amp = np.absolute(s_spec)
+    q, mod = divmod(len(signal),input_len)
+    signal = signal[0:len(signal) - mod]
+    signal = np.reshape(signal, (q, input_len))
+
+    for idx in xrange(0, q):
+        signal[idx] = np.fft.fftpack.fft(signal[idx])
+
+    s_amp = np.absolute(signal)
     return s_amp
 
 def denoise(signal, model):
     signal_len = len(signal)
 
-    s_spec = np.fft.fftpack.fft(signal)
-    s_amp = np.absolute(s_spec)
-    s_phase = np.angle(s_spec)
+    input = preprocess(signal)
+    s_amp = np.absolute(input)
 
-    input_len = 120
+    q, mod = divmod(signal_len,input_len)
 
-    q, mod = divmod(len(signal),input_len)
-    input = signal[0:len(signal) - mod]
-    input = np.reshape(input, (q, input_len))
-    
-    pred = model.predict(input, batch_size=256)
-    s_phase = pred.flatten()
-    s_phase = np.r_[s_phase, signal[len(signal)-mod:len(signal)]]
+    pred = model.predict(input, batch_size=batch_size)
 
-    spec = s_amp * np.exp(s_phase * 1j)
-    return np.real(np.fft.fftpack.ifft(spec))
+    spec = s_amp * np.exp(pred * 1j)
+    for idx in xrange(0, q):
+        spec[idx] = np.fft.fftpack.ifft(spec[idx])
+
+    ret = spec.flatten()
+    ret = np.r_[ret, signal[len(signal)-mod:len(signal)]]
+
+    return ret
 
 def read_signal(filename, winsize):
     wf = wave.open(filename, 'rb')
@@ -127,7 +127,8 @@ def read_signal(filename, winsize):
                wf.getframerate(), wf.getnframes(),
                wf.getcomptype(), wf.getcompname()))
     siglen = ((int)(len(st) / 2 / winsize) + 1) * winsize
-    signal = np.zeros(siglen, np.float32)
+#    signal = np.zeros(siglen, np.float32)
+    signal = np.zeros(siglen, np.complex)
     signal[0:int(len(st) / 2)] = np.float32(np.fromstring(st, np.int16)) / 32767.0
     return [signal, params]
 
@@ -139,25 +140,26 @@ if __name__ == '__main__':
     test_output_signal, test_output_params = read("./asakai3_test_denoised.wav", 512)
 
     l_input_train,r_input_train = separate_channels(train_input_signal)
+#    print(len(l_input_train))
     l_output_train,r_output_train = separate_channels(train_output_signal)
+#    print(len(l_output_train))
     l_input_test,r_input_test = separate_channels(test_input_signal)
+#    print(len(l_input_test))
     l_output_test,r_output_test = separate_channels(test_output_signal)
+#    print(len(l_output_test))
     
-    l_input_train = l_input_train[0:1000]
-    l_output_train = l_output_train[0:1000]
-    l_input_test = l_input_test[0:1000]
-    l_output_test = l_output_test[0:1000]
-    r_input_test = r_input_test[0:1000]
+#     l_input_train_ = l_input_train[0:1000]
+#     l_output_train_ = l_output_train[0:1000]
+#     l_input_test_ = l_input_test[0:1000]
+#     l_output_test_ = l_output_test[0:1000]
+#     r_input_test_ = r_input_test[0:1000]
 
-    l_input_train_ = preprocess(l_input_train)
-    l_output_train_ = preprocess(l_output_train)
-    l_input_test_ = preprocess(l_input_test)
-    l_output_test_ = preprocess(l_output_test)
+    l_input_train_ = l_input_train
+    l_output_train_ = l_output_train[0:34437888]
+    l_input_test_ = l_input_test
+    l_output_test_ = l_output_test[0:9371392]
+    r_input_test_ = r_input_test
     
-    print("preprocess finished.")
-
     model = train(l_input_train_, l_output_train_, l_input_test_, l_output_test_)
 
-    print("train finished.")
-
-    write(test_input_params, uniting_channles(denoise(l_input_test, model),denoise(r_input_test, model)))
+    write(test_input_params, uniting_channles(denoise(l_input_test_, model),denoise(r_input_test_, model)))
