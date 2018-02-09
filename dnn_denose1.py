@@ -12,16 +12,17 @@ import wave
 import tempfile
 from six.moves import xrange, zip
 import scipy.special as spc
-
+from python_speech_features import fbank
 
 from keras.layers import Dense
 from keras.models import Model, Sequential
 import os.path
 
+#banks = 40
 input_len = 120
-hidden_dim = 300
+hidden_dim = 80
 batch_size = 256
-epocs = 200
+epocs = 400
 _window = None
 
 def uniting_channles(leftsignal, rightsignal):
@@ -36,6 +37,7 @@ def train(train_in, train_out, test_in, test_out):
     model = Sequential()
 
     model.add(Dense(input_len, activation='relu', input_shape=(input_len,)))
+    model.add(Dense(hidden_dim, activation='relu'))
     model.add(Dense(hidden_dim, activation='relu'))
     model.add(Dense(input_len,  activation='sigmoid'))
 
@@ -93,10 +95,16 @@ def separate_channels(signal):
 def preprocess(signal):
     q, mod = divmod(len(signal),input_len)
     signal = signal[0:len(signal) - mod]
+    qq, mod = divmod(len(signal),input_len / 2)
+    for idx in xrange(0, qq-2):
+        signal[idx*(input_len/2):idx*(input_len/2)+input_len] * _window
     signal = np.reshape(signal, (q, input_len))
+#    tmp_arr = np.array([])
 
     for idx in xrange(0, q):
-        signal[idx] = np.fft.fftpack.fft(signal[idx] * _window)
+        signal[idx] = np.fft.fftpack.fft(signal[idx])
+#        signal[idx] = np.fft.fftpack.fft(signal[idx])
+#        tmp_arr = np.r_[tmp_arr, fbank(signal[idx*input_len:(idx+1)*input_len],samplerate=44100,winlen=0.025,winstep=0.01,nfilt=banks,nfft=input_len,lowfreq=0,highfreq=None,preemph=0.97)[0][0]]
 
     s_amp = np.absolute(signal)
     s_phase = np.angle(signal)
@@ -107,15 +115,19 @@ def denoise(signal, model):
 
     amps, s_phase = preprocess(signal)
 
-    q, mod = divmod(signal_len,input_len)
+    q, mod = divmod(signal_len, input_len)
 
     pred_amps = model.predict(amps, batch_size=batch_size)
 
     spec = pred_amps * np.exp(s_phase * 1j)
     for idx in xrange(0, q):
-        spec[idx] = np.fft.fftpack.ifft(spec[idx]) / _window
+        spec[idx] = np.fft.fftpack.ifft(spec[idx])
 
     ret = spec.flatten()
+    qq, mod2 = divmod(signal_len, input_len/2)
+    for idx in xrange(0, qq-2):
+        signal[idx*(input_len/2):idx*(input_len/2)+input_len] / _window
+
     ret = np.r_[ret, signal[len(signal)-mod:len(signal)]]
 
     return np.real(ret)
@@ -164,5 +176,9 @@ if __name__ == '__main__':
     _window = sp.hanning(input_len)
     
     model = train(l_input_train_, l_output_train_, l_input_test_, l_output_test_)
+    
+#    denoised_len = (9371392 % input_len) * banks
+#    test_input_params[2] = 4410
+#    test_input_params[3] = denoised_len
 
     write(test_input_params, uniting_channles(denoise(l_input_test_, model),denoise(r_input_test_, model)))
