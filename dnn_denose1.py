@@ -12,18 +12,68 @@ import wave
 import tempfile
 from six.moves import xrange, zip
 import scipy.special as spc
-from python_speech_features import fbank
+#from python_speech_features import fbank
+import scipy.signal
 
 from keras.layers import Dense
 from keras.models import Model, Sequential
 import os.path
 
 #banks = 40
-input_len = 2000
-hidden_dim = 1000
+input_len = 120
+hidden_dim = 100
 batch_size = 256
-epocs = 400
+epocs = 100
 _window = None
+
+def preEmphasis(signal, p):
+    """プリエンファシスフィルタ"""
+    # 係数 (1.0, -p) のFIRフィルタを作成
+    return scipy.signal.lfilter([1.0, -p], 1, signal)
+
+def hz2mel(f):
+    """Hzをmelに変換"""
+    return 1127.01048 * np.log(f / 700.0 + 1.0)
+
+def mel2hz(m):
+    """melをhzに変換"""
+    return 700.0 * (np.exp(m / 1127.01048) - 1.0)
+
+def melFilterBank(fs, nfft, numChannels):
+    """メルフィルタバンクを作成"""
+    # ナイキスト周波数（Hz）
+    fmax = fs / 2
+    # ナイキスト周波数（mel）
+    melmax = hz2mel(fmax)
+    # 周波数インデックスの最大数
+    nmax = nfft / 2
+    # 周波数解像度（周波数インデックス1あたりのHz幅）
+    df = fs / nfft
+    # メル尺度における各フィルタの中心周波数を求める
+    dmel = melmax / (numChannels + 1)
+    melcenters = np.arange(1, numChannels + 1) * dmel
+    # 各フィルタの中心周波数をHzに変換
+    fcenters = mel2hz(melcenters)
+    # 各フィルタの中心周波数を周波数インデックスに変換
+    indexcenter = np.round(fcenters / df)
+    # 各フィルタの開始位置のインデックス
+    indexstart = np.hstack(([0], indexcenter[0:numChannels - 1]))
+    # 各フィルタの終了位置のインデックス
+    indexstop = np.hstack((indexcenter[1:numChannels], [nmax]))
+
+    filterbank = np.zeros((numChannels, nmax))
+    for c in np.arange(0, numChannels):
+        # 三角フィルタの左の直線の傾きから点を求める
+        increment= 1.0 / (indexcenter[c] - indexstart[c])
+        for i in np.arange(indexstart[c], indexcenter[c]):
+            filterbank[c, i] = (i - indexstart[c]) * increment
+        # 三角フィルタの右の直線の傾きから点を求める
+        decrement = 1.0 / (indexstop[c] - indexcenter[c])
+        for i in np.arange(indexcenter[c], indexstop[c]):
+            filterbank[c, i] = 1.0 - ((i - indexcenter[c]) * decrement)
+
+    return filterbank, fcenters
+
 
 def uniting_channles(leftsignal, rightsignal):
     ret = []
@@ -93,11 +143,16 @@ def separate_channels(signal):
     return signal[0::2], signal[1::2] 
 
 def preprocess(signal):
-    q, mod = divmod(len(signal),input_len)
-    signal2 = signal[0:len(signal) - mod]
-    qq, mod = divmod(len(signal),input_len / 2)
-    for idx in xrange(0, qq-2):
-        signal2[idx*(input_len/2):idx*(input_len/2)+input_len] *= _window
+    p = 0.97         # プリエンファシス係数
+    psignal = preEmphasis(signal, p)
+
+    q, mod = divmod(len(psignal),input_len)
+    signal2 = signal[0:len(psignal) - mod]
+
+#     qq, mod = divmod(len(signal),input_len / 2)
+#     for idx in xrange(0, qq-2):
+#         signal2[idx*(input_len/2):idx*(input_len/2)+input_len] *= _window
+
     signal2 = np.reshape(signal2, (q, input_len))
 #    tmp_arr = np.array([])
 
@@ -124,9 +179,9 @@ def denoise(signal, model):
         spec[idx] = np.fft.fftpack.ifft(spec[idx])
 
     ret = spec.flatten()
-    qq, mod2 = divmod(signal_len, input_len/2)
-    for idx in xrange(0, qq-2):
-        ret[idx*(input_len/2):idx*(input_len/2)+input_len] /= _window
+#     qq, mod2 = divmod(signal_len, input_len/2)
+#     for idx in xrange(0, qq-2):
+#         ret[idx*(input_len/2):idx*(input_len/2)+input_len] /= _window
 
     ret = np.r_[ret, signal[len(signal)-mod:len(signal)]]
 
@@ -172,6 +227,7 @@ if __name__ == '__main__':
     l_input_test_ = l_input_test
     l_output_test_ = l_output_test[0:9371392]
     r_input_test_ = r_input_test
+    r_input_train_ = r_input_train
 
     _window = sp.hanning(input_len)
     
@@ -181,4 +237,5 @@ if __name__ == '__main__':
 #    test_input_params[2] = 4410
 #    test_input_params[3] = denoised_len
 
-    write(test_input_params, uniting_channles(denoise(l_input_test_, model),denoise(r_input_test_, model)))
+#     write(test_input_params, uniting_channles(denoise(l_input_test_, model),denoise(r_input_test_, model)))
+    write(test_input_params, uniting_channles(denoise(l_input_train_, model),denoise(r_input_train_, model)))
