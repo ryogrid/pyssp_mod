@@ -23,7 +23,7 @@ import os.path
 input_len = 120
 hidden_dim = 100
 batch_size = 256
-epocs = 100
+epocs = 1000
 _window = None
 
 def preEmphasis(signal, p):
@@ -110,10 +110,10 @@ def train(train_in, train_out, test_in, test_out):
     return model
 
 
-def write(params,signal):
+def write(fname, params,signal):
 #    st = tempfile.TemporaryFile()
 #    wf=wave.open(st,'wb')
-    wf=wave.open("./dnn_denoised.wav",'wb')
+    wf=wave.open(fname,'wb')
     wf.setparams(params)
     s=sp.int16(signal*32767.0).tostring()
     wf.writeframes(s)
@@ -238,4 +238,5 @@ if __name__ == '__main__':
 #    test_input_params[3] = denoised_len
 
 #     write(test_input_params, uniting_channles(denoise(l_input_test_, model),denoise(r_input_test_, model)))
-    write(test_input_params, uniting_channles(denoise(l_input_train_, model),denoise(r_input_train_, model)))
+    write("./dnn_denoised_train.wav", train_input_params, uniting_channles(denoise(l_input_train_, model),denoise(r_input_train_, model)))
+    write("./dnn_denoised_test.wav", test_input_params, uniting_channles(denoise(l_input_test_, model),denoise(r_input_test_, model)))
