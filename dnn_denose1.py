@@ -19,11 +19,11 @@ from keras.layers import Dense
 from keras.models import Model, Sequential
 import os.path
 
-banks = 40
-input_len = 200
-hidden_dim = 30
+#banks = 40
+input_len = 120
+hidden_dim = 80
 batch_size = 256
-epocs = 1
+epocs = 2000
 _window = None
 _fs = 44100
 
@@ -98,10 +98,10 @@ def uniting_channles(leftsignal, rightsignal):
 def train(train_in, train_out, test_in, test_out):
     model = Sequential()
 
-    model.add(Dense(banks, activation='relu', input_shape=(banks,)))
+    model.add(Dense(input_len, activation='relu', input_shape=(banks,)))
     model.add(Dense(hidden_dim, activation='relu'))
     model.add(Dense(hidden_dim, activation='relu'))
-    model.add(Dense(banks,  activation='sigmoid'))
+    model.add(Dense(input_len,  activation='sigmoid'))
 
     model.compile(optimizer='adam', loss='binary_crossentropy')
 
@@ -156,7 +156,7 @@ def read(fname,winsize):
 def separate_channels(signal):
     return signal[0::2], signal[1::2] 
 
-_filterbank, _fcenters = melFilterBank(_fs, input_len * 2, banks)
+# _filterbank, _fcenters = melFilterBank(_fs, input_len * 2, banks)
 
 def preprocess(signal):
     p = 0.97         # プリエンファシス係数
@@ -180,17 +180,17 @@ def preprocess(signal):
     s_amp = np.absolute(signal2)
     s_phase = np.angle(signal2)
 
-    # 振幅スペクトルに対してフィルタバンクの各フィルタをかけ、
-    # 振幅の和の対数をとる    
-    mspec = []
-    for idx in xrange(0, q):
-        for c in np.arange(0, banks):
-            mspec.append(np.log10(sum(s_amp[idx] * _filterbank[c])))
-    s_amp = np.array(mspec)
+#     # 振幅スペクトルに対してフィルタバンクの各フィルタをかけ、
+#     # 振幅の和の対数をとる    
+#     mspec = []
+#     for idx in xrange(0, q):
+#         for c in np.arange(0, banks):
+#             mspec.append(np.log10(sum(s_amp[idx] * _filterbank[c])))
+#     s_amp = np.array(mspec)
     
-    qq, mod = divmod(len(s_amp), banks)
-    s_amp = s_amp[0:len(s_amp) - mod]
-    s_amp = np.reshape(s_amp, (qq, banks))
+#     qq, mod = divmod(len(s_amp), banks)
+#     s_amp = s_amp[0:len(s_amp) - mod]
+#     s_amp = np.reshape(s_amp, (qq, banks))
 
     return s_amp, s_phase
 
@@ -200,22 +200,22 @@ def denoise(signal, model):
     amps, s_phase = preprocess(signal)
 
     q, mod = divmod(signal_len, input_len)
-    q2, mod2 = divmod(signal_len - mod, banks)
+#     q2, mod2 = divmod(signal_len - mod, banks)
 
     pred_amps = model.predict(amps, batch_size=batch_size)
 
-    pred_amps_ = np.zeros((q, input_len))
-    for idx in xrange(0, q):
-        for idx2 in xrange(0, banks):
-            gen_val = pow(10, pred_amps[idx][idx2])
-            sum_val = np.sum(_filterbank[idx2])
-            if sum_val == 0:
-                continue
-            for idx3 in xrange(0, input_len):
-                if _filterbank[idx2][idx3] != 0:
-                    pred_amps_[idx][idx3] = gen_val * (_filterbank[idx2][idx3] / sum_val)
+#     pred_amps_ = np.zeros((q, input_len))
+#     for idx in xrange(0, q):
+#         for idx2 in xrange(0, banks):
+#             gen_val = pow(10, pred_amps[idx][idx2])
+#             sum_val = np.sum(_filterbank[idx2])
+#             if sum_val == 0:
+#                 continue
+#             for idx3 in xrange(0, input_len):
+#                 if _filterbank[idx2][idx3] != 0:
+#                     pred_amps_[idx][idx3] = gen_val * (_filterbank[idx2][idx3] / sum_val)
 
-    pred_amps = pred_amps_
+#     pred_amps = pred_amps_
 
     spec = pred_amps * np.exp(s_phase * 1j)
     for idx in xrange(0, q):
@@ -226,7 +226,7 @@ def denoise(signal, model):
     for idx in xrange(0, qq-2):
         ret[idx*(input_len/2):idx*(input_len/2)+input_len] /= _window
 
-    ret = np.r_[ret, signal[len(signal)-(mod+mod2):len(signal)]]
+    ret = np.r_[ret, signal[len(signal)-mod:len(signal)]]
 
     return np.real(ret)
 
