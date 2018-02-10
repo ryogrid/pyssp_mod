@@ -110,6 +110,8 @@ def train(train_in, train_out, test_in, test_out):
     y_test_in, _ = preprocess(test_in)
     y_test_out, _ = preprocess(test_out)
 
+    print("preprocess for train finished.")
+
     model.fit(x_train_in, x_train_out,
                 nb_epoch=epocs,
                 batch_size=batch_size,
@@ -163,9 +165,9 @@ def preprocess(signal):
     q, mod = divmod(len(psignal),input_len)
     signal2 = signal[0:len(psignal) - mod]
 
-#     qq, mod = divmod(len(signal),input_len / 2)
-#     for idx in xrange(0, qq-2):
-#         signal2[idx*(input_len/2):idx*(input_len/2)+input_len] *= _window
+    qq, mod = divmod(len(signal2),input_len / 2)
+    for idx in xrange(0, qq-2):
+        signal2[idx*(input_len/2):idx*(input_len/2)+input_len] *= _window
 
     signal2 = np.reshape(signal2, (q, input_len))
 #    tmp_arr = np.array([])
@@ -203,14 +205,14 @@ def denoise(signal, model):
     pred_amps = model.predict(amps, batch_size=batch_size)
 
     pred_amps_ = []
-    for idx in xrange(0, q2):
-        for idx2 in xrange(0, banks):
-            gen_val = math.pow(10, pred_amps[idx][idx2])
-            sum_val = np.sum(_filterbank[idx2])
-            if sum_val == 0:
-                sum_val = 1
-            for idx3 in xrange(0, input_len):
-                pred_amps_.append(gen_val * (_filterbank[idx2][idx3] / sum_val))
+    for idx in xrange(0, q):
+#        for idx2 in xrange(0, banks):
+        gen_val = pow(10, pred_amps[idx][0])
+        sum_val = np.sum(_filterbank[0])
+        if sum_val == 0:
+            sum_val = 1
+        for idx3 in xrange(0, input_len):
+            pred_amps_.append(gen_val * (_filterbank[0][idx3] / sum_val))
 
     pred_amps = np.array(pred_amps_)
     pred_amps = np.reshape(pred_amps, (q, input_len))
@@ -220,9 +222,9 @@ def denoise(signal, model):
         spec[idx] = np.fft.fftpack.ifft(spec[idx])
 
     ret = spec.flatten()
-#     qq, mod2 = divmod(signal_len, input_len/2)
-#     for idx in xrange(0, qq-2):
-#         ret[idx*(input_len/2):idx*(input_len/2)+input_len] /= _window
+    qq, mod3 = divmod(signal_len, input_len/2)
+    for idx in xrange(0, qq-2):
+        ret[idx*(input_len/2):idx*(input_len/2)+input_len] /= _window
 
     ret = np.r_[ret, signal[len(signal)-(mod+mod2):len(signal)]]
 
@@ -257,18 +259,19 @@ if __name__ == '__main__':
     l_output_test,r_output_test = separate_channels(test_output_signal)
 #    print(len(l_output_test))
     
-#     l_input_train_ = l_input_train[0:1000]
-#     l_output_train_ = l_output_train[0:1000]
-#     l_input_test_ = l_input_test[0:1000]
-#     l_output_test_ = l_output_test[0:1000]
-#     r_input_test_ = r_input_test[0:1000]
+    l_input_train_ = l_input_train[0:1200]
+    l_output_train_ = l_output_train[0:1200]
+    l_input_test_ = l_input_test[0:1200]
+    l_output_test_ = l_output_test[0:1200]
+    r_input_test_ = r_input_test[0:1200]
+    r_input_train_ = r_input_train[0:1200]
 
-    l_input_train_ = l_input_train
-    l_output_train_ = l_output_train[0:34437888]
-    l_input_test_ = l_input_test
-    l_output_test_ = l_output_test[0:9371392]
-    r_input_test_ = r_input_test
-    r_input_train_ = r_input_train
+#     l_input_train_ = l_input_train
+#     l_output_train_ = l_output_train[0:34437888]
+#     l_input_test_ = l_input_test
+#     l_output_test_ = l_output_test[0:9371392]
+#     r_input_test_ = r_input_test
+#     r_input_train_ = r_input_train
 
     _window = sp.hanning(input_len)
     
