@@ -98,7 +98,7 @@ def uniting_channles(leftsignal, rightsignal):
 def train(train_in, train_out, test_in, test_out):
     model = Sequential()
 
-    model.add(Dense(input_len, activation='relu', input_shape=(banks,)))
+    model.add(Dense(input_len, activation='relu', input_shape=(input_len,)))
     model.add(Dense(hidden_dim, activation='relu'))
     model.add(Dense(hidden_dim, activation='relu'))
     model.add(Dense(input_len,  activation='sigmoid'))
