@@ -19,9 +19,9 @@ from keras.layers import Dense
 from keras.models import Model, Sequential
 import os.path
 
-banks = 120
-input_len = 600
-hidden_dim = 100
+banks = 40
+input_len = 200
+hidden_dim = 30
 batch_size = 256
 epocs = 1
 _window = None
