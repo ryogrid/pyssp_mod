@@ -204,18 +204,18 @@ def denoise(signal, model):
 
     pred_amps = model.predict(amps, batch_size=batch_size)
 
-    pred_amps_ = []
+    pred_amps_ = np.zeros((q, input_len))
     for idx in xrange(0, q):
-#        for idx2 in xrange(0, banks):
-        gen_val = pow(10, pred_amps[idx][0])
-        sum_val = np.sum(_filterbank[0])
-        if sum_val == 0:
-            sum_val = 1
-        for idx3 in xrange(0, input_len):
-            pred_amps_.append(gen_val * (_filterbank[0][idx3] / sum_val))
+        for idx2 in xrange(0, banks):
+            gen_val = pow(10, pred_amps[idx][idx2])
+            sum_val = np.sum(_filterbank[idx2])
+            if sum_val == 0:
+                continue
+            for idx3 in xrange(0, input_len):
+                if _filterbank[idx2][idx3] != 0:
+                    pred_amps_[idx][idx3] = gen_val * (_filterbank[idx2][idx3] / sum_val)
 
-    pred_amps = np.array(pred_amps_)
-    pred_amps = np.reshape(pred_amps, (q, input_len))
+    pred_amps = pred_amps_
 
     spec = pred_amps * np.exp(s_phase * 1j)
     for idx in xrange(0, q):
@@ -251,35 +251,28 @@ if __name__ == '__main__':
     test_output_signal, test_output_params = read("./asakai3_test_denoised.wav", 512)
 
     l_input_train,r_input_train = separate_channels(train_input_signal)
-#    print(len(l_input_train))
     l_output_train,r_output_train = separate_channels(train_output_signal)
-#    print(len(l_output_train))
     l_input_test,r_input_test = separate_channels(test_input_signal)
-#    print(len(l_input_test))
     l_output_test,r_output_test = separate_channels(test_output_signal)
-#    print(len(l_output_test))
-    
-    l_input_train_ = l_input_train[0:1200]
-    l_output_train_ = l_output_train[0:1200]
-    l_input_test_ = l_input_test[0:1200]
-    l_output_test_ = l_output_test[0:1200]
-    r_input_test_ = r_input_test[0:1200]
-    r_input_train_ = r_input_train[0:1200]
 
-#     l_input_train_ = l_input_train
-#     l_output_train_ = l_output_train[0:34437888]
-#     l_input_test_ = l_input_test
-#     l_output_test_ = l_output_test[0:9371392]
-#     r_input_test_ = r_input_test
-#     r_input_train_ = r_input_train
+#     l_input_train_ = l_input_train[0:1200]
+#     l_output_train_ = l_output_train[0:1200]
+#     l_input_test_ = l_input_test[0:1200]
+#     l_output_test_ = l_output_test[0:1200]
+#     r_input_test_ = r_input_test[0:1200]
+#     r_input_train_ = r_input_train[0:1200]
+
+    l_input_train_ = l_input_train
+    l_output_train_ = l_output_train[0:34437888]
+    l_input_test_ = l_input_test
+    l_output_test_ = l_output_test[0:9371392]
+    r_input_test_ = r_input_test
+    r_input_train_ = r_input_train
 
     _window = sp.hanning(input_len)
     
     model = train(l_input_train_, l_output_train_, l_input_test_, l_output_test_)
     
-#    denoised_len = (9371392 % input_len) * banks
-#    test_input_params[2] = 4410
-#    test_input_params[3] = denoised_len
 
 #     write(test_input_params, uniting_channles(denoise(l_input_test_, model),denoise(r_input_test_, model)))
     write("./dnn_denoised_train.wav", train_input_params, uniting_channles(denoise(l_input_train_, model),denoise(r_input_train_, model)))
