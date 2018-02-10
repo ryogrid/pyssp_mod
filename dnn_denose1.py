@@ -100,7 +100,7 @@ def train(train_in, train_out, test_in, test_out):
 
     model.add(Dense(input_len, activation='relu', input_shape=(input_len,)))
     model.add(Dense(hidden_dim, activation='relu'))
-    model.add(Dense(hidden_dim, activation='relu'))
+#    model.add(Dense(hidden_dim, activation='relu'))
     model.add(Dense(input_len,  activation='sigmoid'))
 
     model.compile(optimizer='adam', loss='binary_crossentropy')
