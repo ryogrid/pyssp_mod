@@ -20,7 +20,7 @@ from keras.models import Model, Sequential
 import os.path
 
 banks = 120
-input_len = 1200
+input_len = 600
 hidden_dim = 100
 batch_size = 256
 epocs = 1
@@ -186,9 +186,9 @@ def preprocess(signal):
             mspec.append(np.log10(sum(s_amp[idx] * _filterbank[c])))
     s_amp = np.array(mspec)
     
-    qq, mod = divmod(len(signal), banks)
-    s_amp = s_ampl[0:len(s_amp) - mod]
-    s_amp = np.reshape(s_amp, (q, banks))
+    qq, mod = divmod(len(s_amp), banks)
+    s_amp = s_amp[0:len(s_amp) - mod]
+    s_amp = np.reshape(s_amp, (qq, banks))
 
     return s_amp, s_phase
 
