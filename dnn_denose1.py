@@ -23,7 +23,7 @@ import os.path
 input_len = 120
 hidden_dim = 80
 batch_size = 256
-epocs = 2000
+epocs = 4000
 _window = None
 _fs = 44100
 
@@ -100,7 +100,7 @@ def train(train_in, train_out, test_in, test_out):
 
     model.add(Dense(input_len, activation='relu', input_shape=(input_len,)))
     model.add(Dense(hidden_dim, activation='relu'))
-#    model.add(Dense(hidden_dim, activation='relu'))
+    model.add(Dense(hidden_dim, activation='relu'))
     model.add(Dense(input_len,  activation='sigmoid'))
 
     model.compile(optimizer='adam', loss='binary_crossentropy')
