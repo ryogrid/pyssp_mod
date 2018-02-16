@@ -160,22 +160,32 @@ function mul_exp_nparray(arr,real,imaginary){
   return ret
 }
 
-function denoise(signal, noise_signal){
-    // var kernel = my_concatenate(noise_signal, fill_nparray(np.array(new Array(signal.size - noise_signal.size)), 0)) // zero pad the kernel to same length
-    // for(var i=0;i<kernel.size;i++){
-    //   console.log(kernel.get(i))
-    // }
+// function denoise(signal, noise_signal){
+//     // var kernel = my_concatenate(noise_signal, fill_nparray(np.array(new Array(signal.size - noise_signal.size)), 0)) // zero pad the kernel to same length
+//     // for(var i=0;i<kernel.size;i++){
+//     //   console.log(kernel.get(i))
+//     // }
+//
+//     var signal_spectol = my_fft(signal, signal.size)
+//     var s_amp = my_abs(signal_spectol)
+//     var s_phase = my_angle(signal_spectol)
+//     var noise_spectol = my_fft(noise_signal, noise_signal.size)
+//     var n_amp = my_abs(noise_spectol)
+//
+//     var denoised_amp = s_amp.multiply(0.001).add(n_amp.multiply(1.0 - 0.001))
+//     var mul_exp = mul_exp_nparray(s_phase,0,1)
+//     var tmp = my_multiply(denoised_amp,mul_exp)
+//     return my_real(my_ifft(tmp,signal_size))
+// }
 
+function denoise(signal, noise_signal){
     var signal_spectol = my_fft(signal, signal.size)
     var s_amp = my_abs(signal_spectol)
     var s_phase = my_angle(signal_spectol)
-    var noise_spectol = my_fft(noise_signal, noise_signal.size)
-    var n_amp = my_abs(noise_spectol)
 
-    var denoised_amp = s_amp.multiply(0.001).add(n_amp.multiply(1.0 - 0.001))
     var mul_exp = mul_exp_nparray(s_phase,0,1)
-    var tmp = my_multiply(denoised_amp,mul_exp)
-    return my_real(tmp)
+    var tmp = my_multiply(s_amp,mul_exp)
+    return my_real(my_ifft(tmp, signal.size))
 }
 
 
@@ -369,7 +379,7 @@ var params = [2,-1,44100]
 
 // var output = noise_reduction(signal, noise, params, _winsize)
 var output = denoise(signal, noise)
-output = signal.add(output)
+//output = signal.add(output)
 
 var result_str = ""
 for(var i=0;i<output.size;i++){
