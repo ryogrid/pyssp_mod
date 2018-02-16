@@ -144,19 +144,55 @@ function slice_nparray(arr,begin,end){
 //     return out
 // }
 
+function mul_exp_nparray(arr,real,imaginary){
+  var arr_len = arr.size
+  var ret = np.array(new Array(arr_len),dtype=dtype_str)
+  var x = math.complex(real, imaginary)
+  for(var i=0;i<arr_len;i++){
+    var tmp = math.exp(math.multiply(arr.get(i),x))
+    //var tmp = math.exp(arr.get(i))
+    //console.log(arr.get(i))
+    //console.log(math.multiply(arr.get(i),x))
+    //console.log(tmp)
+    ret.set(i,tmp)
+    //console.log(math.exp(math.multiply(arr.get(i),x)))
+  }
+  return ret
+}
 
-function decompose(signal, noise_signal, lambd){
+function denoise(signal, noise_signal){
     // var kernel = my_concatenate(noise_signal, fill_nparray(np.array(new Array(signal.size - noise_signal.size)), 0)) // zero pad the kernel to same length
     // for(var i=0;i<kernel.size;i++){
     //   console.log(kernel.get(i))
     // }
 
-    var H = my_fft(noise_signal, noise_signal.size)
-    var a = my_multiply(my_fft(signal, signal.size), my_conj(H))
-    var b = my_add(my_multiply(H, my_conj(H)),lambd*lambd)
-    var deconvolved = my_ifft(my_division(a, b), signal.size)
-    return my_real(deconvolved)
+    var signal_spectol = my_fft(signal, signal.size)
+    var s_amp = my_abs(signal_spectol)
+    var s_phase = my_angle(signal_spectol)
+    var noise_spectol = my_fft(noise_signal, noise_signal.size)
+    var n_amp = my_abs(noise_spectol)
+
+    var denoised_amp = s_amp.multiply(0.001).add(n_amp.multiply(1.0 - 0.001))
+    var mul_exp = mul_exp_nparray(s_phase,0,1)
+    var tmp = my_multiply(denoised_amp,mul_exp)
+    return my_real(tmp)
 }
+
+
+
+
+// function decompose(signal, noise_signal, lambd){
+//     // var kernel = my_concatenate(noise_signal, fill_nparray(np.array(new Array(signal.size - noise_signal.size)), 0)) // zero pad the kernel to same length
+//     // for(var i=0;i<kernel.size;i++){
+//     //   console.log(kernel.get(i))
+//     // }
+//
+//     var H = my_fft(noise_signal, noise_signal.size)
+//     var a = my_multiply(my_fft(signal, signal.size), my_conj(H))
+//     var b = my_add(my_multiply(H, my_conj(H)),lambd*lambd)
+//     var deconvolved = my_ifft(my_division(a, b), signal.size)
+//     return my_real(deconvolved)
+// }
 
 function get_frame(signal, winsize, no){
     var shift = winsize
@@ -182,6 +218,24 @@ function add_signal(signal, frame, winsize, no){
     }
 }
 
+function my_angle(ndarr){
+  var arr_len = ndarr.size
+  var ret_arr = np.array(new Array(arr_len),dtype=dtype_str)
+  for(var i=0;i<arr_len;i++){
+    //ret_arr.set(i, math.atan(ndarr.get(i))*2)
+    var val = ndarr.get(i)
+    var atan_ret = null
+    if(val.im != 0){
+      atan_ret = Math.atan(val.re/val.im)
+    }else {
+      atan_ret = 0.0
+    }
+
+    ret_arr.set(i,atan_ret)
+    //console.log(ret_arr.get(i))
+  }
+  return ret_arr
+}
 
 function my_fft(ndarr,input_len){
   var fft_arr = []
@@ -199,13 +253,13 @@ function my_fft(ndarr,input_len){
       //console.log(ndarr.get(i))
       //fft_arr.push([ndarr.get(i),0])
 
-      if(i==0){
-        fft_arr.push([0,ndarr.get(i)])
-      }else{
-        //console.log(ndarr.get(i))
-        fft_arr.push([ndarr.get(i),0])
-      }
-
+      // if(i==0){
+      //   fft_arr.push([0,ndarr.get(i)])
+      // }else{
+      //   //console.log(ndarr.get(i))
+      //   fft_arr.push([ndarr.get(i),0])
+      // }
+      fft_arr.push([ndarr.get(i),0])
     }
   }
   var tmp = np.fft(np.array(fft_arr,dtype=dtype_str))
@@ -302,11 +356,7 @@ splited = noise_str.split(",")
 base_arr = new Array(signal_len)
 var noise = np.array(base_arr,dtype=dtype_str)
 for(var i=0;i<signal_len;i++){
-  if(i < splited.length){
-    noise.set(i,Number(splited[i]))
-  }else{
-    noise.set(i,0)
-  }
+  noise.set(i,Number(splited[i%splited.length]))
   //console.log(noise.get(i))
   // console.log(Number(splited[i]))
 }
@@ -318,7 +368,8 @@ console.log('elapsed time at read data：' + String(elapsed_ms) + "ms")
 var params = [2,-1,44100]
 
 // var output = noise_reduction(signal, noise, params, _winsize)
-var output = decompose(signal, noise, _lambd_est)
+var output = denoise(signal, noise)
+output = signal.add(output)
 
 var result_str = ""
 for(var i=0;i<output.size;i++){

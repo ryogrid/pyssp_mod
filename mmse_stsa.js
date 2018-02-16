@@ -232,7 +232,7 @@ function noise_reduction(signal,params,winsize,window,ss,ntime){
     // console.log(signal.size) // signal.size is ok
     var n_pow = compute_avgpowerspectrum(slice_nparray(signal,0,winsize*Math.round(params[2]/winsize/(1000.0/ntime))),winsize,window) //maybe 300ms
     //console.log(n_pow) // bad values array
-    var nf = frame_num/(winsize/2) - 1
+    //var nf = frame_num/(winsize/2) - 1
     var end = Math.round(frame_num/(winsize/2) - 1)
     //for no in xrange(nf):
     var shift = Math.round(winsize / 2)
