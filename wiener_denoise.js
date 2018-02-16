@@ -84,14 +84,23 @@ function my_real(op1){
     return op1_nparray(op1,function(val){return val.re})
 }
 
+function fill_nparray(arr,val){
+  var arr_len = arr.size
+  var ret = np.array(new Array(arr_len),dtype=dtype_str)
+  for(var i=0;i<arr_len;i++){
+    ret.set(i,val)
+  }
+  return ret
+}
+
 function my_concatenate(arr1, arr2){
   var all_len = arr1.size + arr2.size
-  var ret_arr = np.zeros([all_len])
+  var ret_arr = np.array(new Array(all_len), dtype=dtype_str)
   for(var i=0;i<arr1.size;i++){
-    ret_arr[i] = arr1[i]
+    ret_arr[i] = arr1.get(i)
   }
   for(var i=0;i<arr2.size;i++){
-    ret_arr[arr1.size + i] = arr2[i]
+    ret_arr[arr1.size + i] = arr2.get(i)
   }
   return ret_arr
 }
@@ -137,10 +146,16 @@ function slice_nparray(arr,begin,end){
 
 
 function decompose(signal, noise_signal, lambd){
-    var kernel = my_concatenate(noise_signal, np.zeros([signal.size - noise_signal.size])) // zero pad the kernel to same length
-    var H = my_fft(kernel, kernel.size)
-    var deconvolved = my_real(my_ifft(my_division(my_multiply(my_fft(signal, signal.size), my_conj(H)), my_add(my_multiply(H, my_conj(H)),lambd*lambd)),signal.size))
-    return deconvolved
+    // var kernel = my_concatenate(noise_signal, fill_nparray(np.array(new Array(signal.size - noise_signal.size)), 0)) // zero pad the kernel to same length
+    // for(var i=0;i<kernel.size;i++){
+    //   console.log(kernel.get(i))
+    // }
+
+    var H = my_fft(noise_signal, noise_signal.size)
+    var a = my_multiply(my_fft(signal, signal.size), my_conj(H))
+    var b = my_add(my_multiply(H, my_conj(H)),lambd*lambd)
+    var deconvolved = my_ifft(my_division(a, b), signal.size)
+    return my_real(deconvolved)
 }
 
 function get_frame(signal, winsize, no){
@@ -183,23 +198,30 @@ function my_fft(ndarr,input_len){
     for(var i=0;i<input_len;i++){
       //console.log(ndarr.get(i))
       //fft_arr.push([ndarr.get(i),0])
+
       if(i==0){
         fft_arr.push([0,ndarr.get(i)])
       }else{
+        //console.log(ndarr.get(i))
         fft_arr.push([ndarr.get(i),0])
       }
+
     }
   }
   var tmp = np.fft(np.array(fft_arr,dtype=dtype_str))
   //console.log(tmp) //OK
   var ret_arr = np.array(new Array(input_len),dtype=dtype_str)
   for(var i=0;i<input_len;i++){
+    // console.log(tmp.get(i,0))
+    // console.log(tmp.get(i,1))
     //ret_arr.set(i,math.complex(tmp.get(i,0),tmp.get(i,1)))
-    if(i==0){
-      ret_arr.set(i,math.complex(tmp.get(i,0),tmp.get(i,1)))
-    }else{
-      ret_arr.set(i,math.complex(tmp.get(i,1),tmp.get(i,0)))
-    }
+
+    // if(i==0){
+    //   ret_arr.set(i,math.complex(tmp.get(i,0),tmp.get(i,1)))
+    // }else{
+    //   ret_arr.set(i,math.complex(tmp.get(i,1),tmp.get(i,0)))
+    // }
+    ret_arr.set(i,math.complex(tmp.get(i,0),tmp.get(i,1)))
   }
   //console.log(tmp)
   return ret_arr
@@ -210,33 +232,41 @@ function my_ifft(ndarr,input_len){
   if(math.typeof(ndarr.get(0)) == "Complex"){
     for(var i=0;i<input_len;i++){
       //console.log(ndarr.get(i))
-      if(i==0){
-        fft_arr.push([ndarr.get(i).im,ndarr.get(i).re])
-      }else{
-        fft_arr.push([ndarr.get(i).re,ndarr.get(i).im])
-      }
-      //fft_arr.push([ndarr.get(i).re,ndarr.get(i).im])
+
+      // if(i==0){
+      //   fft_arr.push([ndarr.get(i).im,ndarr.get(i).re])
+      // }else{
+      //   fft_arr.push([ndarr.get(i).re,ndarr.get(i).im])
+      // }
+
+      fft_arr.push([ndarr.get(i).re,ndarr.get(i).im])
     }
   }else{
     for(var i=0;i<input_len;i++){
       //console.log(ndarr.get(i))
       //fft_arr.push([ndarr.get(i),0])
+
       if(i==0){
         fft_arr.push([ndarr.get(i),0])
       }else{
         fft_arr.push([0,ndarr.get(i)])
       }
+
     }
   }
   var tmp = np.ifft(np.array(fft_arr,dtype=dtype_str))
   var ret_arr = np.array(new Array(input_len),dtype=dtype_str)
   for(var i=0;i<input_len;i++){
+    //console.log(tmp.get(i,0))
+    //console.log(tmp.get(i,1))
     //ret_arr.set(i,math.complex(tmp.get(i,0),tmp.get(i,1)))
-    if(i==0){
-      ret_arr.set(i,math.complex(tmp.get(i,0),tmp.get(i,1)))
-    }else{
-      ret_arr.set(i,math.complex(tmp.get(i,1),tmp.get(i,0)))
-    }
+
+    // if(i==0){
+    //   ret_arr.set(i,math.complex(tmp.get(i,0),tmp.get(i,1)))
+    // }else{
+    //   ret_arr.set(i,math.complex(tmp.get(i,1),tmp.get(i,0)))
+    // }
+    ret_arr.set(i,math.complex(tmp.get(i,0),tmp.get(i,1)))
   }
   //console.log(tmp)
   return ret_arr
@@ -252,25 +282,35 @@ var start_ms = new Date().getTime()
 
 var sample_str = fs.readFileSync('./sample60.txt',"ascii")
 var splited = sample_str.split(",")
+var signal_len = splited.length
 var base_arr = new Array(splited.length)
 var signal = np.array(base_arr,dtype=dtype_str)
-for(var i=0;i<frame_num;i++){
+for(var i=0;i<splited.length;i++){
   signal.set(i,Number(splited[i]))
-  // console.log(i)
-  // console.log(Number(splited[i]))
+  //console.log(signal.get(i))
+  //console.log(Number(splited[i]))
 }
 
+//my_fft(signal, splited.length)
+// for(var i=0;i<splited.length;i++){
+//   console.log(signal.get(i))
+// }
 
 
 var noise_str = fs.readFileSync('./noise_sample.txt',"ascii")
 splited = noise_str.split(",")
-var base_arr = new Array(splited.length)
+base_arr = new Array(signal_len)
 var noise = np.array(base_arr,dtype=dtype_str)
-for(var i=0;i<splited.length;i++){
-  noise.set(i,Number(splited[i]))
-  // console.log(i)
+for(var i=0;i<signal_len;i++){
+  if(i < splited.length){
+    noise.set(i,Number(splited[i]))
+  }else{
+    noise.set(i,0)
+  }
+  //console.log(noise.get(i))
   // console.log(Number(splited[i]))
 }
+
 
 var elapsed_ms = new Date().getTime() - start_ms
 console.log('elapsed time at read data：' + String(elapsed_ms) + "ms")
