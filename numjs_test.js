@@ -45,3 +45,7 @@ console.log(math.exp(math.complex(1,1)))
 var a_ = nj.array([2,4,6])
 console.log(i0_nparray(a_))
 console.log(i1_nparray(a_))
+
+var c = nj.array([0,0,0],dtype="array")
+c.set(0,1)
+console.log(c)

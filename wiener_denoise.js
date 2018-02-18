@@ -97,10 +97,10 @@ function my_concatenate(arr1, arr2){
   var all_len = arr1.size + arr2.size
   var ret_arr = np.array(new Array(all_len), dtype=dtype_str)
   for(var i=0;i<arr1.size;i++){
-    ret_arr[i] = arr1.get(i)
+    ret_arr.set(i,arr1.get(i))
   }
   for(var i=0;i<arr2.size;i++){
-    ret_arr[arr1.size + i] = arr2.get(i)
+    ret_arr.set(arr1.size + i,arr2.get(i))
   }
   return ret_arr
 }
@@ -188,6 +188,17 @@ function denoise(signal, noise_signal){
     return my_real(my_ifft(tmp, signal.size))
 }
 
+// function denoise(signal, noise_signal){
+//     var signal_spectol = my_fft(signal, signal.size)
+//     var s_amp = my_abs(signal_spectol)
+//
+//     return my_real(my_ifft(s_amp, signal.size))
+// }
+
+// function denoise(signal, noise_signal){
+//     var signal_spectol = my_fft(signal, signal.size)
+//     return my_real(my_ifft(signal_spectol, signal.size))
+// }
 
 
 
@@ -234,14 +245,7 @@ function my_angle(ndarr){
   for(var i=0;i<arr_len;i++){
     //ret_arr.set(i, math.atan(ndarr.get(i))*2)
     var val = ndarr.get(i)
-    var atan_ret = null
-    if(val.im != 0){
-      atan_ret = Math.atan(val.re/val.im)
-    }else {
-      atan_ret = 0.0
-    }
-
-    ret_arr.set(i,atan_ret)
+    ret_arr.set(i,math.atan2(val.im, val.re))
     //console.log(ret_arr.get(i))
   }
   return ret_arr
