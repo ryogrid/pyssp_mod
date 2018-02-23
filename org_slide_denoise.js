@@ -262,6 +262,7 @@ function gen_noise_spectol(noise_signal, winsize){
   var all_spectrum = my_abs(my_fft(noise_signal, noise_signal.size))
   var out_spectrum = np.array(new Array(winsize), dtype=dtype_str)
   var idx_arr = get_noise_elem_idxs(_winsize, noise_signal.size)
+  console.log(idx_arr)
   for(var i=0;i<winsize;i++){
     out_spectrum.set(i, all_spectrum.get(idx_arr[i]))
   }
@@ -270,14 +271,14 @@ function gen_noise_spectol(noise_signal, winsize){
 
 // return Array
 function my_fftfreq(n){
-  var out = new Array(n)
+  var out = []
   if(n % 2 == 0){ //even
     out.push(0)
     var len = n / 2
     for(var i=1;i<=(len-1);i++){
       out.push(i/n)
     }
-    for(var i=-1*len;i>=-1;i--){
+    for(var i=-1*len;i<=-1;i++){
       out.push(i/n)
     }
   }else{ //odd
@@ -286,7 +287,7 @@ function my_fftfreq(n){
     for(var i=1;i<=len;i++){
       out.push(i/n)
     }
-    for(var i=-1*len;i>=-1;i--){
+    for(var i=-1*len;i<=-1;i++){
       out.push(i/n)
     }
   }
@@ -297,7 +298,7 @@ function my_fftfreq(n){
 function get_noise_elem_idxs(winsize, noise_len){
     var win_freqs = my_fftfreq(winsize)
     var noise_freqs = my_fftfreq(noise_len)
-    var out = new Array(winsize)
+    var out = []
     for(var cnt=0;cnt<winsize;cnt++){
       var min_diff = 1
       var min_idx = 0
@@ -307,7 +308,7 @@ function get_noise_elem_idxs(winsize, noise_len){
           min_idx = i
         }
       }
-      out.push(noise_freqs[min_idx])
+      out.push(min_idx)
     }
     return out
 }
