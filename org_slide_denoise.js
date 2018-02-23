@@ -351,10 +351,10 @@ for(var i=0;i<splited.length;i++){
 
 var noise_str = fs.readFileSync('./noise_sample.txt',"ascii")
 splited = noise_str.split(",")
-base_arr = new Array(signal_len)
+base_arr = new Array(splited.length)
 var noise = np.array(base_arr,dtype=dtype_str)
-for(var i=0;i<signal_len;i++){
-  noise.set(i,Number(splited[i%splited.length]))
+for(var i=0;i<splited.length;i++){
+  noise.set(i,Number(splited[i]))
   //console.log(noise.get(i))
   // console.log(Number(splited[i]))
 }
