@@ -258,9 +258,10 @@ function my_ifft(ndarr,input_len){
   return ret_arr
 }
 
-function gen_noise_spectrum(noise_signal, _winsize){
+function gen_noise_spectrum(noise_signal, winsize){
   var all_spectrum = my_abs(my_fft(noise_signal, noise_signal.size))
-  var slide = (new Number(noise_signal.size)).div(_winsize)
+  var mo = noise_signal.size % winsize
+  var slide = Math.round(new Number(noise_signal.size - mo) / winsize)
   var out_spectrum = np.array(new Array(_winsize), dtype=dtype_str)
   var cnt=0
   var end = slide * _winsize
