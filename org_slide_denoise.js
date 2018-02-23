@@ -300,7 +300,7 @@ function get_noise_elem_idxs(winsize, noise_len){
     var noise_freqs = my_fftfreq(noise_len)
     var out = []
     for(var cnt=0;cnt<winsize;cnt++){
-      var min_diff = 1
+      var min_diff = 2
       var min_idx = 0
       for(var i=0;i<noise_len;i++){
         var diff = num_diff_abs(noise_freqs[i], win_freqs[cnt])
