@@ -2,6 +2,7 @@
 var np = require("numjs")
 var fs = require("fs")
 var math = require("mathjs")
+var jsonfile = require('jsonfile')
 
 var _BIGNUM = 3000000.0
 var frame_num = 2646000;
@@ -264,21 +265,21 @@ function gen_noise_spectol(noise_signal, winsize){
   var out_spectrum = np.array(new Array(winsize), dtype=dtype_str)
 
   out_spectrum.set(0, all_spectrum.get(0))
-  var mo = (noise_signal.size - 1) % (winsize - 1)
-  var slide = Math.round((noise_signal.size - 1 - mo) / (winsize - 1))
+  var mo = (all_spectrum.size - 1) % (winsize - 1)
+  var slide = Math.round((all_spectrum.size - 1 - mo) / (winsize - 1))
   for(var i=0;i<(winsize-1);i++){
     var sumval = 0
     var avgval = 0
     for(var j=1+slide*i;j<1+slide*(i+1);j++){
-      sumval += noise_signal.get(j)
+      sumval += all_spectrum.get(j)
     }
     if(i==(winsize-2)){
-      for(k=1+slide*(i+1);k<noise_signal.size;k++){
-        sumval += noise_signal.get(k)
+      for(k=1+slide*(i+1);k<all_spectrum.size;k++){
+        sumval += all_spectrum.get(k)
       }
       avgval = sumval / (slide + mo)
     }else{
-      argval = sumval / slide
+      avgval = sumval / slide
     }
     out_spectrum.set(i+1, avgval)
   }
@@ -309,6 +310,12 @@ for(var i=0;i<splited.length;i++){
 }
 
 _noise_spectol = gen_noise_spectol(noise, _winsize)
+jsonfile.writeFile('./noise_spectol.json', _noise_spectol, {
+    encoding: 'utf-8',
+    replacer: null,
+    spaces: null
+}, function (err) {
+});
 
 var elapsed_ms = new Date().getTime() - start_ms
 console.log('elapsed time at read data：' + String(elapsed_ms) + "ms")
