@@ -3,6 +3,7 @@ var np = require("numjs")
 var fs = require("fs")
 var math = require("mathjs")
 
+var _BIGNUM = 3000000.0
 var frame_num = 2646000;
 var bufferSize = frame_num * 4;
 var all_buffersize = bufferSize + 44
@@ -261,8 +262,10 @@ function my_ifft(ndarr,input_len){
 function gen_noise_spectol(noise_signal, winsize){
   var all_spectrum = my_abs(my_fft(noise_signal, noise_signal.size))
   var out_spectrum = np.array(new Array(winsize), dtype=dtype_str)
-  var idx_arr = get_noise_elem_idxs(_winsize, noise_signal.size)
-  console.log(idx_arr)
+  var idx_arr = get_noise_elem_idxs(winsize, noise_signal.size)
+  // for(j=0;j<winsize;j++){
+  //   console.log(idx_arr[j])
+  // }
   for(var i=0;i<winsize;i++){
     out_spectrum.set(i, all_spectrum.get(idx_arr[i]))
   }
@@ -276,19 +279,19 @@ function my_fftfreq(n){
     out.push(0)
     var len = n / 2
     for(var i=1;i<=(len-1);i++){
-      out.push(i/n)
+      out.push(_BIGNUM*i/n)
     }
     for(var i=-1*len;i<=-1;i++){
-      out.push(i/n)
+      out.push(_BIGNUM*i/n)
     }
   }else{ //odd
     out.push(0)
     var len = (n-1) / 2
     for(var i=1;i<=len;i++){
-      out.push(i/n)
+      out.push(_BIGNUM*i/n)
     }
     for(var i=-1*len;i<=-1;i++){
-      out.push(i/n)
+      out.push(_BIGNUM*i/n)
     }
   }
   return out
@@ -298,12 +301,15 @@ function my_fftfreq(n){
 function get_noise_elem_idxs(winsize, noise_len){
     var win_freqs = my_fftfreq(winsize)
     var noise_freqs = my_fftfreq(noise_len)
-    var out = []
-    for(var cnt=0;cnt<winsize;cnt++){
+    var out = [0]
+    for(var cnt=1;cnt<winsize;cnt++){
       var min_diff = 2
       var min_idx = 0
-      for(var i=0;i<noise_len;i++){
+      for(var i=1;i<noise_len;i++){
         var diff = num_diff_abs(noise_freqs[i], win_freqs[cnt])
+        // console.log(noise_freqs[i])
+        // console.log(win_freqs[cnt])
+        // console.log(diff)
         if(diff <= min_diff){
           min_idx = i
         }
