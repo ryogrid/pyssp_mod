@@ -258,18 +258,77 @@ function my_ifft(ndarr,input_len){
   return ret_arr
 }
 
-function gen_noise_spectrum(noise_signal, winsize){
+function gen_noise_spectol(noise_signal, winsize){
   var all_spectrum = my_abs(my_fft(noise_signal, noise_signal.size))
-  var mo = noise_signal.size % winsize
-  var slide = Math.round(new Number(noise_signal.size - mo) / winsize)
-  var out_spectrum = np.array(new Array(_winsize), dtype=dtype_str)
-  var cnt=0
-  var end = slide * _winsize
-  for(var i=0;i<end;i+=slide){
-    out_spectrum.set(cnt, all_spectrum.get(i))
-    cnt++
+  var out_spectrum = np.array(new Array(winsize), dtype=dtype_str)
+  var idx_arr = get_noise_elem_idxs(_winsize, noise_signal.size)
+  for(var i=0;i<winsize;i++){
+    out_spectrum.set(i, all_spectrum.get(idx_arr[i]))
   }
   return out_spectrum
+}
+
+// return Array
+function my_fftfreq(n){
+  var out = new Array(n)
+  if(n % 2 == 0){ //even
+    out.push(0)
+    var len = n / 2
+    for(var i=1;i<=(len-1);i++){
+      out.push(i/n)
+    }
+    for(var i=-1*len;i>=-1;i--){
+      out.push(i/n)
+    }
+  }else{ //odd
+    out.push(0)
+    var len = (n-1) / 2
+    for(var i=1;i<=len;i++){
+      out.push(i/n)
+    }
+    for(var i=-1*len;i>=-1;i--){
+      out.push(i/n)
+    }
+  }
+  return out
+}
+
+// return Array
+function get_noise_elem_idxs(winsize, noise_len){
+    var win_freqs = my_fftfreq(winsize)
+    var noise_freqs = my_fftfreq(noise_len)
+    var out = new Array(winsize)
+    for(var cnt=0;cnt<winsize;cnt++){
+      var min_diff = 1
+      var min_idx = 0
+      for(var i=0;i<noise_len;i++){
+        var diff = num_diff_abs(noise_freqs[i], win_freqs[cnt])
+        if(diff <= min_diff){
+          min_idx = i
+        }
+      }
+      out.push(noise_freqs[min_idx])
+    }
+    return out
+}
+
+function num_diff_abs(x, y){
+  var ret = 0
+  if(x >= 0){
+    if(x >= y){
+      ret = Math.abs(x - y)
+    }else{
+      ret = Math.abs(y - x)
+    }
+  }else{
+    if(x >= y){
+      ret = Math.abs(y - x)
+    }else{
+      ret = Math.abs(x - y)
+    }
+  }
+
+  return ret
 }
 
 var start_ms = new Date().getTime()
@@ -293,7 +352,7 @@ for(var i=0;i<signal_len;i++){
   // console.log(Number(splited[i]))
 }
 
-_noise_spectol = gen_noise_spectrum(noise, _winsize)
+_noise_spectol = gen_noise_spectol(noise, _winsize)
 
 var elapsed_ms = new Date().getTime() - start_ms
 console.log('elapsed time at read data：' + String(elapsed_ms) + "ms")
