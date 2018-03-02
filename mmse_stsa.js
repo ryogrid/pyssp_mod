@@ -276,7 +276,13 @@ function noise_reduction(signal,params,winsize,window,ss,ntime){
 function __init__(winsize, window, constant, ratio, alpha){
     _window = window
     _G = np.array(new Array(winsize),dtype=dtype_str)
+    for(var i=0;i<_G.size;i++){
+      _G.set(i,0.0)
+    }
     _prevGamma = np.array(new Array(winsize),dtype=dtype_str)
+    for(var i=0;i<_prevGamma.size;i++){
+      _prevGamma.set(i,1.0)
+    }
     _alpha = alpha
     _prevAmp = np.array(new Array(winsize),dtype=dtype_str)
     _ratio = ratio
@@ -360,7 +366,7 @@ function compute_by_noise_pow(signal, n_pow){
     //console.log(s_phase)
     //var spec = amp2.multiply(mul_exp_nparray(s_phase,0,1))
     //var mul_exp = mul_exp_nparray(s_phase,0,1)
-    var mul_exp = mul_exp_nparray(s_phase,1,0)
+    var mul_exp = mul_exp_nparray(s_phase,0,1)
     var spec = my_multiply(amp2,mul_exp)
     // for(var i=0;i<_winsize;i++){
     //   var amp2_val = amp2.get(i)
@@ -374,7 +380,13 @@ function compute_by_noise_pow(signal, n_pow){
 //    return np.real(spec_ifft)
     var ret = my_ifft(spec, spec.size)
     //console.log(ret)
-    return my_real(ret)
+    ret = my_real(ret)
+    // console.log("-----------------")
+    // for(var i=0;i<ret.size;i++){
+    //   console.log(ret.get(i))
+    // }
+    // console.log("-----------------")
+    return ret
 }
 
 // function _sigmoid(gain){
