@@ -498,11 +498,13 @@ function my_fft(ndarr,input_len){
     for(var i=0;i<input_len;i++){
       //console.log(ndarr.get(i))
       //fft_arr.push([ndarr.get(i),0])
-      if(i==0){
-        fft_arr.push([0,ndarr.get(i)])
-      }else{
-        fft_arr.push([ndarr.get(i),0])
-      }
+
+      // if(i==0){
+      //   fft_arr.push([0,ndarr.get(i)])
+      // }else{
+      //   fft_arr.push([ndarr.get(i),0])
+      // }
+      fft_arr.push([ndarr.get(i),0])
     }
   }
   var tmp = np.fft(np.array(fft_arr,dtype=dtype_str))
@@ -510,11 +512,13 @@ function my_fft(ndarr,input_len){
   var ret_arr = np.array(new Array(input_len),dtype=dtype_str)
   for(var i=0;i<input_len;i++){
     //ret_arr.set(i,math.complex(tmp.get(i,0),tmp.get(i,1)))
-    if(i==0){
-      ret_arr.set(i,math.complex(tmp.get(i,0),tmp.get(i,1)))
-    }else{
-      ret_arr.set(i,math.complex(tmp.get(i,1),tmp.get(i,0)))
-    }
+
+    // if(i==0){
+    //   ret_arr.set(i,math.complex(tmp.get(i,0),tmp.get(i,1)))
+    // }else{
+    //   ret_arr.set(i,math.complex(tmp.get(i,1),tmp.get(i,0)))
+    // }
+    ret_arr.set(i,math.complex(tmp.get(i,0),tmp.get(i,1)))
   }
   //console.log(tmp)
   return ret_arr
@@ -525,33 +529,36 @@ function my_ifft(ndarr,input_len){
   if(math.typeof(ndarr.get(0)) == "Complex"){
     for(var i=0;i<input_len;i++){
       //console.log(ndarr.get(i))
-      if(i==0){
-        fft_arr.push([ndarr.get(i).im,ndarr.get(i).re])
-      }else{
-        fft_arr.push([ndarr.get(i).re,ndarr.get(i).im])
-      }
-      //fft_arr.push([ndarr.get(i).re,ndarr.get(i).im])
+
+      // if(i==0){
+      //   fft_arr.push([ndarr.get(i).im,ndarr.get(i).re])
+      // }else{
+      //   fft_arr.push([ndarr.get(i).re,ndarr.get(i).im])
+      // }
+      fft_arr.push([ndarr.get(i).re,ndarr.get(i).im])
     }
   }else{
     for(var i=0;i<input_len;i++){
       //console.log(ndarr.get(i))
       //fft_arr.push([ndarr.get(i),0])
-      if(i==0){
-        fft_arr.push([ndarr.get(i),0])
-      }else{
-        fft_arr.push([0,ndarr.get(i)])
-      }
+
+      // if(i==0){
+      //   fft_arr.push([ndarr.get(i),0])
+      // }else{
+      //   fft_arr.push([0,ndarr.get(i)])
+      // }
+      fft_arr.push([ndarr.get(i),0])
     }
   }
   var tmp = np.ifft(np.array(fft_arr,dtype=dtype_str))
   var ret_arr = np.array(new Array(input_len),dtype=dtype_str)
   for(var i=0;i<input_len;i++){
-    //ret_arr.set(i,math.complex(tmp.get(i,0),tmp.get(i,1)))
-    if(i==0){
-      ret_arr.set(i,math.complex(tmp.get(i,0),tmp.get(i,1)))
-    }else{
-      ret_arr.set(i,math.complex(tmp.get(i,1),tmp.get(i,0)))
-    }
+    // if(i==0){
+    //   ret_arr.set(i,math.complex(tmp.get(i,0),tmp.get(i,1)))
+    // }else{
+    //   ret_arr.set(i,math.complex(tmp.get(i,1),tmp.get(i,0)))
+    // }
+    ret_arr.set(i,math.complex(tmp.get(i,0),tmp.get(i,1)))
   }
   //console.log(tmp)
   return ret_arr
