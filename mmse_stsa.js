@@ -542,7 +542,7 @@ function my_ifft(ndarr,input_len){
 }
 
 function compute_avgpowerspectrum(signal, winsize, window){
-    var windownum = Math.round(signal.size / (winsize / 2)) - 1
+    var windownum = Math.round(signal.size / (winsize / 2)) - 1 - 1
     var avgpow = np.array(new Array(winsize),dtype=dtype_str)
     for(var i=0;i<winsize;i++){
       avgpow.set(i,0.0)

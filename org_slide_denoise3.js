@@ -12,6 +12,7 @@ var dtype_str = "array"
 
 var _winsize = 512
 var _noise_spectol = null
+var _window = null
 
 function op2_nparray(op1,op2,fnk){
     var arr_len = op1.size
@@ -101,10 +102,12 @@ function slice_nparray(arr,begin,end){
 }
 
 function noise_reduction(signal,noise_spectol,winsize){
-    var out=np.array(new Array(frame_num),dtype=dtype_str)
-    fill_nparray(out, 0.0)
+    var out=np.array(new Array(signal.size),dtype=dtype_str)
+    for(var i=0;i<signal.size;i++){
+      out.set(i,0.0)
+    }
     //console.log(n_pow) // bad values array
-    var end = Math.round(frame_num/winsize)
+    var end = Math.round(signal.size/winsize)
     //for no in xrange(nf):
     var shift = winsize
     for(var no=0;no<end;no++){
@@ -140,6 +143,14 @@ function denoise(signal, noise_spectol){
     var mul_exp = mul_exp_nparray(s_phase,0,1)
     var tmp = my_multiply(denoised_amp,mul_exp)
     return my_real(my_ifft(tmp,signal.size))
+}
+
+function get_frame_half_shift(signal, winsize, no){
+    var shift = Math.round(winsize/2)
+    var start = Math.round(no * shift)
+    var end = start + winsize
+    var ret = slice_nparray(signal,start,end)
+    return ret
 }
 
 function get_frame(signal, winsize, no){
@@ -260,32 +271,65 @@ function my_ifft(ndarr,input_len){
   return ret_arr
 }
 
-function gen_noise_spectol(noise_signal, winsize){
-  var all_spectrum = my_abs(my_fft(noise_signal, noise_signal.size))
-  var out_spectrum = np.array(new Array(winsize), dtype=dtype_str)
+function gen_noise_spectol(signal, winsize){
+    var windownum = Math.round(signal.size / (winsize / 2)) - 1 -1
+    var avgpow = np.array(new Array(winsize),dtype=dtype_str)
+    for(var i=0;i<winsize;i++){
+      avgpow.set(i, 0.0)
+    }
+    for(var l=0;l<windownum;l++){
+        //console.log("compute_avgpowerspectrum signal.size" + String(signal.size))
+//        var tmp = np.abs(np.fft(get_frame(signal, winsize, l).multiply(window)))
+        var real_arr = get_frame_half_shift(signal, winsize, l).multiply(_window)
+        //console.log(real_arr)
+        var tmp = my_abs(my_fft(real_arr,real_arr.size))
+        //console.log(tmp.multiply(tmp))
+        // for(var i=0;i<winsize;i++){
+        //   console.log(avgpow.get(i))
+        // }
+        avgpow = avgpow.add(tmp)
+        // for(var i=0;i<winsize;i++){
+        //   console.log(avgpow.get(i))
+        // }
+    }
+    return avgpow.divide(windownum * 1.0)
+}
 
-  out_spectrum.set(0, all_spectrum.get(0))
-  var mo = (all_spectrum.size - 1) % (winsize - 1)
-  var slide = Math.round((all_spectrum.size - 1 - mo) / (winsize - 1))
-  for(var i=0;i<(winsize-1);i++){
-    var sumval = 0
-    var avgval = 0
-    for(var j=1+slide*i;j<1+slide*(i+1);j++){
-      sumval += all_spectrum.get(j)
-    }
-    if(i==(winsize-2)){
-      for(k=1+slide*(i+1);k<all_spectrum.size;k++){
-        sumval += all_spectrum.get(k)
-      }
-      avgval = sumval / (slide + mo)
-    }else{
-      avgval = sumval / slide
-    }
-    out_spectrum.set(i+1, avgval)
+function generate_hann_arr(M){
+  var ret_arr = np.array(new Array(M),dtype=dtype_str)
+  for(i=0;i<M;i++){
+    ret_arr.set(i,0.5 - 0.5*Math.cos(2*Math.PI*i/(M-1)))
   }
 
-  return out_spectrum
+  return ret_arr
 }
+
+// function gen_noise_spectol(noise_signal, winsize){
+//   var all_spectrum = my_abs(my_fft(noise_signal, noise_signal.size))
+//   var out_spectrum = np.array(new Array(winsize), dtype=dtype_str)
+//
+//   out_spectrum.set(0, all_spectrum.get(0))
+//   var mo = (all_spectrum.size - 1) % (winsize - 1)
+//   var slide = Math.round((all_spectrum.size - 1 - mo) / (winsize - 1))
+//   for(var i=0;i<(winsize-1);i++){
+//     var sumval = 0
+//     var avgval = 0
+//     for(var j=1+slide*i;j<1+slide*(i+1);j++){
+//       sumval += all_spectrum.get(j)
+//     }
+//     if(i==(winsize-2)){
+//       for(k=1+slide*(i+1);k<all_spectrum.size;k++){
+//         sumval += all_spectrum.get(k)
+//       }
+//       avgval = sumval / (slide + mo)
+//     }else{
+//       avgval = sumval / slide
+//     }
+//     out_spectrum.set(i+1, avgval)
+//   }
+//
+//   return out_spectrum
+// }
 
 var start_ms = new Date().getTime()
 
@@ -308,13 +352,14 @@ for(var i=0;i<splited.length;i++){
   // console.log(Number(splited[i]))
 }
 
+_window = generate_hann_arr(_winsize)
 _noise_spectol = gen_noise_spectol(noise, _winsize)
-// jsonfile.writeFile('./noise_spectol.json', _noise_spectol, {
-//     encoding: 'utf-8',
-//     replacer: null,
-//     spaces: null
-// }, function (err) {
-// });
+jsonfile.writeFile('./noise_spectol.json', _noise_spectol, {
+    encoding: 'utf-8',
+    replacer: null,
+    spaces: null
+}, function (err) {
+});
 
 var elapsed_ms = new Date().getTime() - start_ms
 console.log('elapsed time at read data：' + String(elapsed_ms) + "ms")
