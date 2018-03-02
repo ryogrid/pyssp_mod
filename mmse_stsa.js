@@ -166,8 +166,7 @@ function less_nparray(arr1,arr2){
 }
 
 function set_with_bool_nparray(arr,bool_arr,val){
-  var arr_len = arr.size
-  var tmp_arr = []
+  var arr_len = arr.sizes
 
   for(var i=0;i<arr_len;i++){
     if(bool_arr.get(i)){
@@ -226,21 +225,21 @@ function isinf_nparray(arr){
 
 function noise_reduction(signal,params,winsize,window,ss,ntime){
     var out=np.array(new Array(frame_num),dtype=dtype_str)
-    for(var i=0;i<frame_num;i++){
+    for(var i=0;i<signal.size;i++){
       out.set(i,0.0)
     }
     // console.log(signal.size) // signal.size is ok
     var n_pow = compute_avgpowerspectrum(slice_nparray(signal,0,winsize*Math.round(params[2]/winsize/(1000.0/ntime))),winsize,window) //maybe 300ms
     //console.log(n_pow) // bad values array
     //var nf = frame_num/(winsize/2) - 1
-    var end = Math.round(frame_num/(winsize/2) - 1)
+    var end = Math.round(signal.size/(winsize/2) - 1)
     //for no in xrange(nf):
     var shift = Math.round(winsize / 2)
     for(var no=0;no<end;no++){
         //console.log("noise_reduction:" + String(no))
         var slice_start = Math.round(no * shift)
         var slice_end = slice_start + winsize
-        if(slice_end <= frame_num){
+        if(slice_end <= signal.size){
           var s = get_frame(signal, winsize, no)
           add_signal(out, compute_by_noise_pow(s,n_pow), winsize, no)
         }
@@ -326,6 +325,11 @@ function compute_by_noise_pow(signal, n_pow){
 
     //console.log(_G)
     var idx = less_nparray(s_amp.multiply(s_amp), n_pow)
+    // console.log("-----------------")
+    // for(var i=0;i<idx.size;i++){
+    //   console.log(idx.get(i))
+    // }
+    // console.log("-----------------")
 
     // _G[idx] = _constant
     // idx = np.isnan(_G) + np.isinf(_G)
