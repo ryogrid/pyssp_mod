@@ -145,6 +145,8 @@ class kPCA():
         # Obtain the n largest eigenvalues and eigenvectors of K.
         # The results are in ascending order
         # The eigenvalue lambda_[i] corresponds to the eigenvector alpha[:,i].
+        print("shape=" + str(Ktrain.shape))
+        print("shape[0]=" + str(Ktrain.shape[0]))
         lambda_, alpha = eigh(Ktrain, eigvals=(Ktrain.shape[0]-n,Ktrain.shape[0]-1))
 
         # Normalize the eigenvectors so that:
