@@ -36,6 +36,8 @@ class kPCA():
         print("--- Kernel matrix for train obtained")
         # Obtain eigenvectors from K
         self.alphas = self.obtain_alphas(self.Ktrain, n)  # l_train x n
+        self.alphas[np.isnan(self.alphas)] = 0
+        print("alphas shape=" + str(self.alphas.shape))
         print("--- Alphas obtained")
         # Obtain RBF Kernel Matrix for test data, dim: l_test x l_train (
         # REVISE THIS STEP)
@@ -53,6 +55,7 @@ class kPCA():
         for i in range(self.Xtest.shape[0]):
             # Find z, pre-image
             z = self.obtain_preimage(i, n, c)
+            #print(z)
             self.Z.append(z)
             # print("---", i/363)  # User information
         self.Z = np.array(self.Z)
@@ -145,8 +148,6 @@ class kPCA():
         # Obtain the n largest eigenvalues and eigenvectors of K.
         # The results are in ascending order
         # The eigenvalue lambda_[i] corresponds to the eigenvector alpha[:,i].
-        print("shape=" + str(Ktrain.shape))
-        print("shape[0]=" + str(Ktrain.shape[0]))
         lambda_, alpha = eigh(Ktrain, eigvals=(Ktrain.shape[0]-n,Ktrain.shape[0]-1))
 
         # Normalize the eigenvectors so that:

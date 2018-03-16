@@ -19,9 +19,8 @@ import os.path
 from our_kpca import kPCA
 
 _input_len = 512
-_n_reconstruct = 180
+_n_reconstruct = 430
 _sigma = 0.5
-_window = None
 
 def uniting_channles(leftsignal, rightsignal):
     ret = []
@@ -84,19 +83,25 @@ def denoise(signal_train, signal_test):
 
     kpca = kPCA(amps_train, amps_test)
     denoised_amp = kpca.obtain_preimages(_n_reconstruct, _sigma)
-    q, mod = divmod(len(signal_test),_input_len)
-    denoised_amp2 = np.zeros((_input_len, q), np.complex)
+    print("denoised_amp shape=" + str(denoised_amp.shape))
+    q, mod = divmod(signal_test.size,_input_len)
+    denoised_amp2 = np.zeros((q, _input_len), np.complex)
     for jj in xrange(0, _input_len):
         for ii in xrange(0, q):
             denoised_amp2[ii][jj] = denoised_amp[jj][ii]
 
-    denoised_spec = denoised_amp2 * np.exp(s_phase_test * 1j)
+    s_phase_test2 = np.zeros((q, _input_len), np.complex)
+    for jj in xrange(0, _input_len):
+        for ii in xrange(0, q):
+            s_phase_test2[ii][jj] = s_phase_test[jj][ii]
+
+    denoised_spec = denoised_amp2 * np.exp(s_phase_test2 * 1j)
     for idx in xrange(0, q):
         denoised_spec[idx] = np.fft.fftpack.ifft(denoised_spec[idx])
 
     ret = denoised_spec.flatten()
-    ret = np.r_[ret, signal_test[len(signal_test)-mod:len(signal_test)]]
-    return ret
+    ret = np.r_[ret, signal_test[signal_test.size-mod:signal_test.size]]
+    return np.real(ret)
 
 def read_signal(filename, winsize):
     wf = wave.open(filename, 'rb')
@@ -112,19 +117,27 @@ def read_signal(filename, winsize):
 
 
 if __name__ == '__main__':
-    train_input_signal, train_input_params = read("./asakai13_train.wav", _input_len)
-    test_input_signal, test_input_params = read("./asakai3_test.wav", _input_len)
+    # train_input_signal, train_input_params = read("./asakai13_train.wav", _input_len)
+    # test_input_signal, test_input_params = read("./asakai3_test.wav", _input_len)
+
+    train_input_signal, train_input_params = read("./asakai60.wav", _input_len)
+    test_input_signal, test_input_params = read("./asakai60.wav", _input_len)
 
     l_input_train,r_input_train = separate_channels(train_input_signal)
     l_input_test,r_input_test = separate_channels(test_input_signal)
 
-    l_input_train_ = l_input_train[0:1200]
-    l_input_test_ = l_input_test[0:1200]
+    # l_input_train_ = l_input_train[0:1200]
+    # l_input_test_ = l_input_test[0:1200]
 
-    # l_input_train_ = l_input_train
-    # l_input_test_ = l_input_test
+    # l_input_train_ = l_input_train[0:18303*512]
+    # l_input_test_ = l_input_test[0:18303*512]
+
+    l_input_train_ = l_input_train
+    l_input_test_ = l_input_test
     # r_input_train_ = r_input_train
     # r_input_test_ = r_input_test
 
     denoised_signal = denoise(l_input_train_, l_input_test_)
+    for ii in xrange(0, denoised_signal.size):
+        print(denoised_signal[ii])
     write("./dnn_denoised_test.wav", test_input_params, uniting_channles(denoised_signal, denoised_signal))
