@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+np.complex#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
 # Python 2.7.10
@@ -46,7 +46,7 @@ def read(fname,winsize):
                    wf.getframerate(), wf.getnframes(),
                    wf.getcomptype(), wf.getcompname()))
         siglen=((int )(len(str)/2/winsize) + 1) * winsize
-        signal=sp.zeros(siglen, sp.complex)
+        signal=sp.zeros(siglen, np.complex)
         signal[0:len(str)/2] = sp.float32(sp.fromstring(str,sp.int16))/32767.0
         return signal,params
     else:
@@ -65,13 +65,13 @@ def preprocess(signal):
         signal2[idx] = np.fft.fftpack.fft(signal2[idx])
 
     s_amp = np.absolute(signal2)
-    s_amp2 = np.zeros((_input_len, q), sp.complex)
+    s_amp2 = np.zeros((_input_len, q), np.complex)
     for jj in xrange(0, _input_len):
         for ii in xrange(0, q):
             s_amp2[jj][ii] = s_amp[ii][jj]
 
     s_phase = np.angle(signal2)
-    s_phase2 = np.zeros((_input_len, q), sp.complex)
+    s_phase2 = np.zeros((_input_len, q), np.complex)
     for jj in xrange(0, _input_len):
         for ii in xrange(0, q):
             s_phase2[jj][ii] = s_phase[ii][jj]
@@ -85,7 +85,7 @@ def denoise(signal_train, signal_test):
     kpca = kPCA(amps_train, amps_test)
     denoised_amp = kpca.obtain_preimages(_n_reconstruct, _sigma)
     q, mod = divmod(len(signal_test),_input_len)
-    denoised_amp2 = np.zeros((_input_len, q), sp.complex)
+    denoised_amp2 = np.zeros((_input_len, q), np.complex)
     for jj in xrange(0, _input_len):
         for ii in xrange(0, q):
             denoised_amp2[ii][jj] = denoised_amp[jj][ii]
