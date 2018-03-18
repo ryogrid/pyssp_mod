@@ -63,6 +63,7 @@ class kPCA():
         return self.Z
 
     def obtain_preimage(self, j, n, c):
+        #print("obtain_preimage!")
         """
         :param j: index of the test data, that is Xtest[j,:]
         :param n: number of components used in reconstruction
@@ -90,6 +91,9 @@ class kPCA():
                 s += 1e-8
             z_new = zcoeff/s
             n_iter += 1
+            #print(z_new)
+            #print(str(np.linalg.norm(z - z_new)))
+            #print("-----")
         if np.array_equal(z_new, self.Xtest[j, :]):
             import pdb
             pdb.set_trace()

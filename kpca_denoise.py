@@ -19,8 +19,8 @@ import os.path
 from our_kpca import kPCA
 
 _input_len = 512
-_n_reconstruct = 430
-_sigma = 0.5
+_n_reconstruct = 4000
+_sigma = 0.3
 
 def uniting_channles(leftsignal, rightsignal):
     ret = []
@@ -64,18 +64,20 @@ def preprocess(signal):
         signal2[idx] = np.fft.fftpack.fft(signal2[idx])
 
     s_amp = np.absolute(signal2)
-    s_amp2 = np.zeros((_input_len, q), np.complex)
-    for jj in xrange(0, _input_len):
-        for ii in xrange(0, q):
-            s_amp2[jj][ii] = s_amp[ii][jj]
-
+    # s_amp2 = np.zeros((_input_len, q), np.complex)
+    # for jj in xrange(0, _input_len):
+    #     for ii in xrange(0, q):
+    #         s_amp2[jj][ii] = s_amp[ii][jj]
+    #
     s_phase = np.angle(signal2)
-    s_phase2 = np.zeros((_input_len, q), np.complex)
-    for jj in xrange(0, _input_len):
-        for ii in xrange(0, q):
-            s_phase2[jj][ii] = s_phase[ii][jj]
+    # s_phase2 = np.zeros((_input_len, q), np.complex)
+    # for jj in xrange(0, _input_len):
+    #     for ii in xrange(0, q):
+    #         s_phase2[jj][ii] = s_phase[ii][jj]
+    #
+    # return s_amp2, s_phase2
 
-    return s_amp2, s_phase2
+    return s_amp, s_phase
 
 def denoise(signal_train, signal_test):
     amps_train, s_phase_train = preprocess(signal_train)
@@ -85,17 +87,19 @@ def denoise(signal_train, signal_test):
     denoised_amp = kpca.obtain_preimages(_n_reconstruct, _sigma)
     print("denoised_amp shape=" + str(denoised_amp.shape))
     q, mod = divmod(signal_test.size,_input_len)
-    denoised_amp2 = np.zeros((q, _input_len), np.complex)
-    for jj in xrange(0, _input_len):
-        for ii in xrange(0, q):
-            denoised_amp2[ii][jj] = denoised_amp[jj][ii]
+    # denoised_amp2 = np.zeros((q, _input_len), np.complex)
+    # for jj in xrange(0, _input_len):
+    #     for ii in xrange(0, q):
+    #         denoised_amp2[ii][jj] = denoised_amp[jj][ii]
+    #
+    # s_phase_test2 = np.zeros((q, _input_len), np.complex)
+    # for jj in xrange(0, _input_len):
+    #     for ii in xrange(0, q):
+    #         s_phase_test2[ii][jj] = s_phase_test[jj][ii]
+    #
+    # denoised_spec = denoised_amp2 * np.exp(s_phase_test2 * 1j)
 
-    s_phase_test2 = np.zeros((q, _input_len), np.complex)
-    for jj in xrange(0, _input_len):
-        for ii in xrange(0, q):
-            s_phase_test2[ii][jj] = s_phase_test[jj][ii]
-
-    denoised_spec = denoised_amp2 * np.exp(s_phase_test2 * 1j)
+    denoised_spec = denoised_amp * np.exp(s_phase_test * 1j)
     for idx in xrange(0, q):
         denoised_spec[idx] = np.fft.fftpack.ifft(denoised_spec[idx])
 
@@ -138,6 +142,6 @@ if __name__ == '__main__':
     # r_input_test_ = r_input_test
 
     denoised_signal = denoise(l_input_train_, l_input_test_)
-    for ii in xrange(0, denoised_signal.size):
-        print(denoised_signal[ii])
+    # for ii in xrange(0, denoised_signal.size):
+    #     print(denoised_signal[ii])
     write("./dnn_denoised_test.wav", test_input_params, uniting_channles(denoised_signal, denoised_signal))
