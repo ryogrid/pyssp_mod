@@ -17,6 +17,7 @@ import scipy.signal
 import os.path
 
 from our_kpca import kPCA
+from sklearn.decomposition import PCA
 
 _input_len = 512
 _n_reconstruct = 4000
@@ -85,6 +86,12 @@ def denoise(signal_train, signal_test):
 
     kpca = kPCA(amps_train, amps_test)
     denoised_amp = kpca.obtain_preimages(_n_reconstruct, _sigma)
+
+    # pca = PCA(n_components=450)
+    # pca.fit(amps_train)
+    # test_transL = pca.transform(amps_test)
+    # denoised_amp = pca.inverse_transform(test_transL)
+
     print("denoised_amp shape=" + str(denoised_amp.shape))
     q, mod = divmod(signal_test.size,_input_len)
     # denoised_amp2 = np.zeros((q, _input_len), np.complex)
